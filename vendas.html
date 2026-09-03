@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gerenciador de Vendas</title>
+<style>
+:root{
+  color-scheme: light;
+  --plano:#f9f9f7;
+  --superficie:#fcfcfb;
+  --superficie-2:#f2f2ee;
+  --tinta:#0b0b0b;
+  --tinta-2:#52514e;
+  --tinta-3:#898781;
+  --borda:rgba(11,11,11,.12);
+  --grade:#e1e0d9;
+  --linha-base:#c3c2b7;
+  --serie:#2a78d6;
+  --serie-fraca:#cde2fb;
+  --bom:#006300;
+  --bom-fundo:#e7f3e7;
+  --alerta:#d03b3b;
+  --alerta-fundo:#fbeaea;
+  --sombra:0 1px 2px rgba(11,11,11,.06), 0 8px 24px rgba(11,11,11,.05);
+  --raio:14px;
+  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="claro"]){
+    color-scheme: dark;
+    --plano:#0d0d0d;
+    --superficie:#1a1a19;
+    --superficie-2:#232322;
+    --tinta:#ffffff;
+    --tinta-2:#c3c2b7;
+    --tinta-3:#898781;
+    --borda:rgba(255,255,255,.14);
+    --grade:#2c2c2a;
+    --linha-base:#383835;
+    --serie:#3987e5;
+    --serie-fraca:#184f95;
+    --bom:#0ca30c;
+    --bom-fundo:#122a12;
+    --alerta:#e66767;
+    --alerta-fundo:#2e1616;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--fonte);
+  background:var(--plano);
+  color:var(--tinta);
+  font-size:15px;
+  line-height:1.45;
+  -webkit-text-size-adjust:100%;
+}
+button,input,select,textarea{font-family:inherit;font-size:15px}
+h1,h2,h3{margin:0;line-height:1.25}
+.oculto{display:none !important}
+
+/* ---------- tela de conexao ---------- */
+#tela-conexao{
+  min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 16px;
+}
+.cartao-conexao{
+  width:100%;max-width:460px;background:var(--superficie);border:1px solid var(--borda);
+  border-radius:var(--raio);box-shadow:var(--sombra);padding:26px 22px;
+}
+.cartao-conexao h1{font-size:22px;margin-bottom:6px}
+.cartao-conexao p.sub{color:var(--tinta-2);font-size:14px;margin:0 0 20px}
+.campo{margin-bottom:14px}
+.campo label{display:block;font-size:13px;font-weight:600;color:var(--tinta-2);margin-bottom:5px}
+.campo .dica{font-size:12px;color:var(--tinta-3);margin-top:4px}
+input[type=text],input[type=url],input[type=number],input[type=date],input[type=month],select,textarea{
+  width:100%;padding:11px 12px;border:1px solid var(--borda);border-radius:10px;
+  background:var(--superficie);color:var(--tinta);
+}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--serie);outline-offset:1px;border-color:transparent}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 16px;border-radius:10px;border:1px solid var(--borda);
+  background:var(--superficie);color:var(--tinta);font-weight:600;cursor:pointer;
+}
+.btn:active{transform:translateY(1px)}
+.btn-principal{background:var(--serie);border-color:var(--serie);color:#fff}
+.btn-perigo{color:var(--alerta);border-color:var(--borda)}
+.btn-largo{width:100%}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-pequeno{padding:7px 11px;font-size:13px;border-radius:9px}
+
+.passos{background:var(--superficie-2);border-radius:10px;padding:14px 16px 14px 30px;margin:18px 0 0;font-size:13px;color:var(--tinta-2)}
+.passos li{margin-bottom:6px}
+.passos li:last-child{margin-bottom:0}
+
+.aviso{padding:11px 13px;border-radius:10px;font-size:14px;margin-bottom:14px}
+.aviso-erro{background:var(--alerta-fundo);color:var(--alerta);border:1px solid var(--alerta)}
+.aviso-ok{background:var(--bom-fundo);color:var(--bom);border:1px solid var(--bom)}
+
+/* ---------- estrutura do painel ---------- */
+#tela-painel{min-height:100dvh;display:flex;flex-direction:column}
+.topo{
+  position:sticky;top:0;z-index:30;background:var(--superficie);
+  border-bottom:1px solid var(--borda);padding:10px 14px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.topo h1{font-size:16px;flex:1;min-width:110px}
+.topo .planilha{font-size:12px;color:var(--tinta-3);width:100%;margin-top:-4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abas{
+  position:sticky;top:0;z-index:29;display:flex;gap:4px;padding:8px 10px;
+  background:var(--plano);border-bottom:1px solid var(--borda);overflow-x:auto;
+}
+.abas button{
+  flex:1 0 auto;padding:9px 14px;border-radius:999px;border:1px solid transparent;
+  background:transparent;color:var(--tinta-2);font-weight:600;cursor:pointer;white-space:nowrap;
+}
+.abas button[aria-selected=true]{background:var(--serie);color:#fff}
+main{flex:1;padding:14px 14px 60px;max-width:900px;width:100%;margin:0 auto}
+.secao{background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio);
+  box-shadow:var(--sombra);padding:16px;margin-bottom:16px}
+.secao > h2{font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.linha-dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:430px){.linha-dupla{grid-template-columns:1fr}}
+
+/* ---------- carrossel de graficos ---------- */
+.carrossel{position:relative;margin-bottom:16px}
+.carrossel-trilho{
+  display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;
+  scroll-snap-type:x mandatory;padding:2px 30px 8px;scroll-padding-left:30px;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.carrossel-trilho::-webkit-scrollbar{display:none}
+.cartao-grafico{
+  scroll-snap-align:start;flex:0 0 min(280px, 82%);
+  background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio);
+  box-shadow:var(--sombra);padding:14px;min-height:186px;display:flex;flex-direction:column;
+}
+.cartao-grafico h3{font-size:12px;font-weight:600;color:var(--tinta-2);text-transform:uppercase;
+  letter-spacing:.04em;margin-bottom:8px}
+.numero-heroi{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.numero-heroi.bom{color:var(--bom)}
+.sub-numero{font-size:13px;color:var(--tinta-2);margin-top:4px}
+.seta{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--borda);
+  background:var(--superficie);color:var(--tinta);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--sombra);
+}
+.seta[disabled]{opacity:.3;cursor:default}
+.seta-esq{left:-2px}
+.seta-dir{right:-2px}
+.pontinhos{display:flex;gap:5px;justify-content:center;margin-top:2px}
+.pontinhos span{width:6px;height:6px;border-radius:50%;background:var(--linha-base)}
+.pontinhos span.ativo{background:var(--serie);width:16px;border-radius:3px}
+
+/* barras */
+.lista-barras{flex:1;overflow-y:auto;max-height:104px;padding-right:4px}
+.linha-barra{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
+.linha-barra .rotulo{flex:0 0 84px;color:var(--tinta-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.linha-barra .trilha{display:block;flex:1;height:9px;background:var(--grade);border-radius:4px;overflow:hidden}
+.linha-barra .preenche{display:block;height:100%;background:var(--serie);border-radius:0 4px 4px 0}
+.linha-barra .valor{flex:0 0 auto;font-variant-numeric:tabular-nums;color:var(--tinta)}
+.barras-dias{display:flex;align-items:flex-end;gap:6px;height:96px;padding-top:6px}
+.barra-dia{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;
+  height:100%;cursor:default;position:relative}
+.barra-dia .coluna{width:100%;background:var(--serie);border-radius:4px 4px 0 0;min-height:2px}
+.barra-dia .dia{font-size:10px;color:var(--tinta-3);white-space:nowrap}
+.barra-dia .topo-valor{font-size:10px;color:var(--tinta-2);font-variant-numeric:tabular-nums}
+.busca-mini{width:100%;padding:6px 9px;font-size:12px;border-radius:8px;border:1px solid var(--borda);
+  background:var(--superficie);color:var(--tinta);margin-bottom:8px}
+.vazio-grafico{color:var(--tinta-3);font-size:13px;margin:auto 0}
+
+/* ---------- tabelas / listas ---------- */
+.barra-ferramentas{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.barra-ferramentas input[type=text]{flex:1;min-width:150px}
+.item{
+  display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--grade);align-items:flex-start;
+}
+.item:last-child{border-bottom:none}
+.capa{
+  flex:0 0 46px;width:46px;height:64px;border-radius:8px;object-fit:cover;
+  background:var(--superficie-2);border:1px solid var(--borda);
+  display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--tinta-3);
+}
+img.capa{display:block}
+.item-corpo{flex:1;min-width:0}
+.item-titulo{font-weight:600;word-break:break-word}
+.item-info{font-size:13px;color:var(--tinta-2);margin-top:2px}
+.etiqueta{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;
+  background:var(--superficie-2);color:var(--tinta-2);margin-left:6px;vertical-align:middle}
+.etiqueta.zerado{background:var(--alerta-fundo);color:var(--alerta)}
+.etiqueta.doacao{background:var(--bom-fundo);color:var(--bom)}
+.item-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.vazio{color:var(--tinta-3);text-align:center;padding:22px 0;font-size:14px}
+
+/* ---------- caixinhas ---------- */
+.fundo-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.modal{
+  background:var(--superficie);border-radius:var(--raio);border:1px solid var(--borda);
+  box-shadow:var(--sombra);width:100%;max-width:400px;padding:20px;max-height:88dvh;overflow-y:auto;
+}
+.modal h3{font-size:17px;margin-bottom:6px}
+.modal p.sub{color:var(--tinta-2);font-size:14px;margin:0 0 16px}
+.modal-acoes{display:flex;gap:8px;margin-top:18px}
+.modal-acoes .btn{flex:1}
+
+/* ---------- torradinha ---------- */
+#torrada{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);
+  z-index:80;max-width:min(92vw,420px);padding:13px 16px;border-radius:12px;
+  background:var(--tinta);color:var(--plano);font-size:14px;font-weight:500;
+  box-shadow:var(--sombra);opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;
+  text-align:center;
+}
+#torrada.aparece{opacity:1;transform:translateX(-50%) translateY(0)}
+#torrada.erro{background:var(--alerta);color:#fff}
+
+.carregando{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px 0;color:var(--tinta-2)}
+.girando{width:18px;height:18px;border:2px solid var(--grade);border-top-color:var(--serie);
+  border-radius:50%;animation:girar .7s linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+.pre-visualizacao{display:flex;gap:12px;align-items:center;margin-top:8px}
+.pre-visualizacao img{width:56px;height:78px;object-fit:cover;border-radius:8px;border:1px solid var(--borda)}
+.escolher-arquivo{position:relative;overflow:hidden;display:inline-flex}
+.escolher-arquivo input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.obrigatorio{color:var(--alerta)}
+.rodape-versao{text-align:center;font-size:11px;color:var(--tinta-3);padding:8px 0 20px}
+</style>
+</head>
+<body>
+<!-- ================= TELA DE CONEXAO ================= -->
+<div id="tela-conexao">
+  <div class="cartao-conexao">
+    <h1>📕 Gerenciador de Vendas</h1>
+    <p class="sub">Conecte a planilha do Google onde as vendas serão guardadas.</p>
+
+    <div id="erro-conexao" class="aviso aviso-erro oculto"></div>
+
+    <div class="campo">
+      <label for="entrada-url">Link do Apps Script da planilha</label>
+      <input type="url" id="entrada-url" placeholder="https://script.google.com/macros/s/.../exec"
+             autocomplete="off" spellcheck="false" inputmode="url">
+      <div class="dica">É o endereço que termina em <strong>/exec</strong>, gerado ao implantar o app da web.</div>
+    </div>
+
+    <button class="btn btn-principal btn-largo" id="btn-conectar">Conectar planilha</button>
+
+    <ol class="passos">
+      <li>Na planilha: <strong>Extensões &gt; Apps Script</strong>.</li>
+      <li>Cole o arquivo <strong>Code.gs</strong> e salve.</li>
+      <li><strong>Implantar &gt; Nova implantação &gt; App da Web</strong>.</li>
+      <li>Executar como <em>Eu</em>; acesso para <em>Qualquer pessoa</em>.</li>
+      <li>Copie a URL <strong>/exec</strong> e cole aqui em cima.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ================= PAINEL ================= -->
+<div id="tela-painel" class="oculto">
+  <header class="topo">
+    <h1>📕 Gerenciador de Vendas</h1>
+    <button class="btn btn-pequeno" id="btn-atualizar" title="Recarregar da planilha">🔄</button>
+    <button class="btn btn-pequeno" id="btn-trocar">⚙️ Planilha</button>
+    <div class="planilha" id="nome-planilha"></div>
+  </header>
+
+  <nav class="abas" role="tablist">
+    <button role="tab" id="aba-estoque" aria-selected="true" data-painel="painel-estoque">📚 Estoque</button>
+    <button role="tab" id="aba-vendas" aria-selected="false" data-painel="painel-vendas">🧾 Vendas</button>
+    <button role="tab" id="aba-relatorios" aria-selected="false" data-painel="painel-relatorios">📄 Relatórios</button>
+  </nav>
+
+  <main>
+    <div id="carregando-geral" class="carregando"><span class="girando"></span> Carregando a planilha…</div>
+
+    <!-- ---------- ESTOQUE ---------- -->
+    <section id="painel-estoque" class="oculto">
+
+      <div class="carrossel">
+        <button class="seta seta-esq" id="seta-esq" aria-label="Gráfico anterior">‹</button>
+        <button class="seta seta-dir" id="seta-dir" aria-label="Próximo gráfico">›</button>
+        <div class="carrossel-trilho" id="trilho-graficos">
+
+          <article class="cartao-grafico">
+            <h3>Valor em estoque</h3>
+            <div class="numero-heroi" id="g-estoque-valor">R$ 0,00</div>
+            <div class="sub-numero" id="g-estoque-sub">—</div>
+            <div class="lista-barras" id="g-estoque-barras" style="max-height:70px;margin-top:10px"></div>
+          </article>
+
+          <article class="cartao-grafico">
+            <h3>Total vendido</h3>
+            <div class="numero-heroi" id="g-vendas-valor">R$ 0,00</div>
+            <div class="sub-numero" id="g-vendas-sub">—</div>
+            <div class="lista-barras" id="g-vendas-meses" style="max-height:70px;margin-top:10px"></div>
+          </article>
+
+          <article class="cartao-grafico">
+            <h3>Rank de vendas por obra</h3>
+            <input type="text" class="busca-mini" id="busca-rank" placeholder="🔎 procurar obra…">
+            <div class="lista-barras" id="g-rank" style="max-height:120px"></div>
+          </article>
+
+          <article class="cartao-grafico">
+            <h3>Descontos aplicados</h3>
+            <div class="numero-heroi" id="g-desconto-valor">R$ 0,00</div>
+            <div class="sub-numero" id="g-desconto-sub">—</div>
+            <div class="lista-barras" id="g-desconto-barras" style="max-height:70px;margin-top:10px"></div>
+          </article>
+
+          <article class="cartao-grafico">
+            <h3>Lucro obtido</h3>
+            <div class="numero-heroi bom" id="g-lucro-valor">R$ 0,00</div>
+            <div class="sub-numero" id="g-lucro-sub">—</div>
+            <div class="lista-barras" id="g-lucro-barras" style="max-height:70px;margin-top:10px"></div>
+          </article>
+
+          <article class="cartao-grafico" style="flex:0 0 min(320px, 86%)">
+            <h3 id="titulo-g-periodo">Vendas dos últimos 7 dias</h3>
+            <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+              <select id="periodo-grafico" style="flex:1;padding:6px 8px;font-size:12px;border-radius:8px">
+                <option value="7">Últimos 7 dias</option>
+                <option value="14">Últimos 14 dias</option>
+                <option value="30">Últimos 30 dias</option>
+                <option value="custom">Escolher datas…</option>
+              </select>
+            </div>
+            <div id="datas-grafico" class="oculto" style="display:flex;gap:6px;margin-bottom:6px">
+              <input type="date" id="g-data-inicio" style="flex:1;padding:5px;font-size:12px">
+              <input type="date" id="g-data-fim" style="flex:1;padding:5px;font-size:12px">
+            </div>
+            <div class="barras-dias" id="g-dias"></div>
+            <div class="sub-numero" id="g-dias-sub" style="margin-top:8px">—</div>
+          </article>
+
+        </div>
+        <div class="pontinhos" id="pontinhos"></div>
+      </div>
+
+      <section class="secao">
+        <h2>➕ Cadastrar obra</h2>
+        <form id="form-livro">
+          <input type="hidden" id="livro-id">
+          <div class="campo">
+            <label>Imagem da capa</label>
+            <div class="pre-visualizacao">
+              <img id="previa-capa" class="oculto" alt="Prévia da capa">
+              <div id="previa-vazia" class="capa">📕</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span class="btn btn-pequeno escolher-arquivo">
+                  📷 Escolher imagem
+                  <input type="file" id="arquivo-capa" accept="image/*">
+                </span>
+                <button type="button" class="btn btn-pequeno oculto" id="btn-tirar-capa">Remover imagem</button>
+              </div>
+            </div>
+            <div class="dica" id="dica-capa">Opcional. Sem imagem, a obra aparece com um ícone de livro.</div>
+          </div>
+          <div class="campo">
+            <label for="livro-titulo">Título da obra <span class="obrigatorio">*</span></label>
+            <input type="text" id="livro-titulo" required maxlength="120">
+          </div>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="livro-valor">Valor (R$) <span class="obrigatorio">*</span></label>
+              <input type="number" id="livro-valor" required min="0" step="0.01" inputmode="decimal">
+            </div>
+            <div class="campo">
+              <label for="livro-lucro">Lucro por exemplar (R$) <span class="obrigatorio">*</span></label>
+              <input type="number" id="livro-lucro" required min="0" step="0.01" inputmode="decimal">
+            </div>
+          </div>
+          <div class="campo">
+            <label for="livro-quantidade">Quantidade disponível <span class="obrigatorio">*</span></label>
+            <input type="number" id="livro-quantidade" required min="0" step="1" inputmode="numeric">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" class="btn btn-principal" id="btn-salvar-livro" style="flex:1">Salvar obra</button>
+            <button type="button" class="btn oculto" id="btn-cancelar-livro">Cancelar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="secao">
+        <h2>📚 Obras cadastradas <span class="etiqueta" id="conta-livros">0</span></h2>
+        <div class="barra-ferramentas">
+          <input type="text" id="busca-livros" placeholder="🔎 Procurar obra…">
+        </div>
+        <div id="lista-livros"></div>
+      </section>
+    </section>
+
+    <!-- ---------- VENDAS ---------- -->
+    <section id="painel-vendas" class="oculto">
+      <section class="secao">
+        <h2>🧾 Informar venda</h2>
+        <form id="form-venda">
+          <input type="hidden" id="venda-id">
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="venda-data">Data da venda <span class="obrigatorio">*</span></label>
+              <input type="date" id="venda-data" required>
+            </div>
+            <div class="campo">
+              <label for="venda-responsavel">Responsável <span class="obrigatorio">*</span></label>
+              <input type="text" id="venda-responsavel" required list="lista-responsaveis" maxlength="80">
+              <datalist id="lista-responsaveis"></datalist>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="venda-cliente">Cliente <span class="obrigatorio">*</span></label>
+            <input type="text" id="venda-cliente" required list="lista-clientes" maxlength="80">
+            <datalist id="lista-clientes"></datalist>
+          </div>
+          <div class="campo">
+            <label for="venda-livro">Título do livro vendido <span class="obrigatorio">*</span></label>
+            <select id="venda-livro" required></select>
+            <div class="dica" id="dica-estoque-livro"></div>
+          </div>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="venda-quantidade">Quantidade <span class="obrigatorio">*</span></label>
+              <input type="number" id="venda-quantidade" required min="1" step="1" value="1" inputmode="numeric">
+            </div>
+            <div class="campo">
+              <label for="venda-valor">Valor unitário (R$) <span class="obrigatorio">*</span></label>
+              <input type="number" id="venda-valor" required min="0" step="0.01" inputmode="decimal">
+            </div>
+          </div>
+          <div class="linha-dupla">
+            <div class="campo">
+              <label for="venda-desconto-sn">Desconto?</label>
+              <select id="venda-desconto-sn">
+                <option value="nao">Não</option>
+                <option value="sim">Sim</option>
+              </select>
+            </div>
+            <div class="campo oculto" id="campo-desconto">
+              <label for="venda-desconto">Valor do desconto (R$) <span class="obrigatorio">*</span></label>
+              <input type="number" id="venda-desconto" min="0" step="0.01" value="" inputmode="decimal">
+            </div>
+          </div>
+          <div class="campo">
+            <label for="venda-doacao">Doação?</label>
+            <select id="venda-doacao">
+              <option value="nao">Não</option>
+              <option value="sim">Sim</option>
+            </select>
+            <div class="dica">Na doação o valor fica bloqueado: o exemplar sai do estoque, mas não entra em vendas nem em lucro.</div>
+          </div>
+          <div class="campo">
+            <label for="venda-observacoes">Observações</label>
+            <textarea id="venda-observacoes" maxlength="500"></textarea>
+          </div>
+          <div class="campo" id="resumo-venda" style="background:var(--superficie-2);border-radius:10px;padding:11px 13px;font-size:14px"></div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" class="btn btn-principal" id="btn-salvar-venda" style="flex:1">Salvar venda</button>
+            <button type="button" class="btn oculto" id="btn-cancelar-venda">Cancelar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="secao">
+        <h2>📋 Vendas registradas <span class="etiqueta" id="conta-vendas">0</span></h2>
+        <div class="barra-ferramentas">
+          <input type="text" id="busca-vendas" placeholder="🔎 Procurar por cliente, obra ou responsável…">
+        </div>
+        <div id="lista-vendas"></div>
+      </section>
+    </section>
+
+    <!-- ---------- RELATORIOS ---------- -->
+    <section id="painel-relatorios" class="oculto">
+      <section class="secao">
+        <h2>📅 Vendas por mês</h2>
+        <div class="campo">
+          <label for="rel-mes">Mês</label>
+          <input type="month" id="rel-mes">
+        </div>
+        <div class="sub-numero" id="resumo-rel-mes">—</div>
+        <button class="btn btn-principal btn-largo" id="btn-rel-mes" style="margin-top:12px">Gerar PDF do mês</button>
+      </section>
+
+      <section class="secao">
+        <h2>🗓️ Vendas por ano</h2>
+        <div class="campo">
+          <label for="rel-ano">Ano</label>
+          <select id="rel-ano"></select>
+        </div>
+        <div class="sub-numero" id="resumo-rel-ano">—</div>
+        <button class="btn btn-principal btn-largo" id="btn-rel-ano" style="margin-top:12px">Gerar PDF do ano</button>
+      </section>
+
+      <section class="secao">
+        <h2>📆 Vendas por período</h2>
+        <div class="linha-dupla">
+          <div class="campo">
+            <label for="rel-inicio">Início</label>
+            <input type="date" id="rel-inicio">
+          </div>
+          <div class="campo">
+            <label for="rel-fim">Fim</label>
+            <input type="date" id="rel-fim">
+          </div>
+        </div>
+        <div class="dica">O período não pode passar de um ano.</div>
+        <div class="sub-numero" id="resumo-rel-periodo" style="margin-top:8px">—</div>
+        <button class="btn btn-principal btn-largo" id="btn-rel-periodo" style="margin-top:12px">Gerar PDF do período</button>
+      </section>
+    </section>
+
+    <div class="rodape-versao" id="rodape-versao"></div>
+  </main>
+</div>
+
+<div id="area-modal"></div>
+<div id="torrada" role="status" aria-live="polite"></div>
+<script>
+/* ==================================================================
+   Gerenciador de Vendas — front-end (arquivo unico)
+   Versao do site: 1.0   |   Versao esperada do Code.gs: 1
+   ================================================================== */
+
+var VERSAO_SITE = '1.0';
+var VERSAO_BACKEND_ESPERADA = 1;
+
+var CHAVE_URL = 'gv_url_planilha';
+var CHAVE_RESPONSAVEL = 'gv_ultimo_responsavel';
+var CHAVE_LIVRO = 'gv_ultimo_livro';
+
+var estado = {
+  url: '',
+  planilha: '',
+  livros: [],
+  vendas: [],
+  capaPendente: null,      // {dados, mime, nome} ainda nao enviada ao Drive
+  capaAtual: '',           // url ja salva
+  buscaLivros: '',
+  buscaVendas: '',
+  buscaRank: '',
+  editandoLivro: null,
+  editandoVenda: null
+};
+
+/* ---------------- utilidades ---------------- */
+
+function $(id) { return document.getElementById(id); }
+
+function guardar(chave, valor) {
+  try { localStorage.setItem(chave, valor); } catch (e) {}
+}
+function ler(chave) {
+  try { return localStorage.getItem(chave) || ''; } catch (e) { return ''; }
+}
+function apagar(chave) {
+  try { localStorage.removeItem(chave); } catch (e) {}
+}
+
+function dinheiro(n) {
+  n = Number(n) || 0;
+  return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function dataBonita(iso) {
+  if (!iso || iso.length < 10) return iso || '';
+  var p = iso.slice(0, 10).split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function hojeISO() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+function somarDias(iso, dias) {
+  var p = iso.split('-');
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  d.setDate(d.getDate() + dias);
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+
+var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+             'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+var MESES_CURTO = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+function semAcento(t) {
+  return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function escapar(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+var tempoTorrada = null;
+function torrada(mensagem, erro) {
+  var el = $('torrada');
+  el.textContent = mensagem;
+  el.className = 'aparece' + (erro ? ' erro' : '');
+  clearTimeout(tempoTorrada);
+  tempoTorrada = setTimeout(function () { el.className = ''; }, erro ? 6000 : 4200);
+}
+
+function ocupado(botao, ligado, textoOcupado) {
+  if (!botao) return;
+  if (ligado) {
+    botao.dataset.textoOriginal = botao.innerHTML;
+    botao.innerHTML = textoOcupado || 'Salvando…';
+    botao.disabled = true;
+  } else {
+    if (botao.dataset.textoOriginal) botao.innerHTML = botao.dataset.textoOriginal;
+    botao.disabled = false;
+  }
+}
+
+/* ---------------- caixinhas ---------------- */
+
+function abrirModal(html) {
+  var fundo = document.createElement('div');
+  fundo.className = 'fundo-modal';
+  fundo.innerHTML = '<div class="modal">' + html + '</div>';
+  fundo.addEventListener('click', function (ev) {
+    if (ev.target === fundo) fecharModal();
+  });
+  $('area-modal').appendChild(fundo);
+  return fundo;
+}
+
+function fecharModal() {
+  $('area-modal').innerHTML = '';
+}
+
+function confirmar(titulo, texto, textoBotao, aoConfirmar) {
+  var fundo = abrirModal(
+    '<h3>' + escapar(titulo) + '</h3>' +
+    '<p class="sub">' + escapar(texto) + '</p>' +
+    '<div class="modal-acoes">' +
+    '<button class="btn" data-cancelar>Cancelar</button>' +
+    '<button class="btn btn-principal" data-ok>' + escapar(textoBotao) + '</button>' +
+    '</div>');
+  fundo.querySelector('[data-cancelar]').onclick = fecharModal;
+  fundo.querySelector('[data-ok]').onclick = function () {
+    fecharModal();
+    aoConfirmar();
+  };
+}
+
+/* ---------------- conversa com a planilha ---------------- */
+
+function chamar(corpo, url) {
+  var destino = url || estado.url;
+  return fetch(destino, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(corpo),
+    redirect: 'follow'
+  }).then(function (r) {
+    return r.text();
+  }, function () {
+    throw new Error('Não consegui falar com a planilha. Verifique a internet e o link do Apps Script.');
+  }).then(function (texto) {
+    var dados;
+    try {
+      dados = JSON.parse(texto);
+    } catch (e) {
+      throw new Error('A planilha respondeu algo inesperado. Confira se a implantação está com acesso para "Qualquer pessoa".');
+    }
+    if (!dados.ok) throw new Error(dados.erro || 'Erro desconhecido na planilha.');
+    return dados;
+  });
+}
+
+/* ---------------- conexao ---------------- */
+
+function iniciar() {
+  var salvo = ler(CHAVE_URL);
+  $('btn-conectar').addEventListener('click', conectar);
+  $('entrada-url').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') conectar();
+  });
+  $('btn-trocar').addEventListener('click', trocarPlanilha);
+  $('btn-atualizar').addEventListener('click', function () { recarregar(true); });
+  ligarAbas();
+  ligarEstoque();
+  ligarVendas();
+  ligarRelatorios();
+  $('rodape-versao').textContent = 'Gerenciador de Vendas · versão ' + VERSAO_SITE;
+
+  if (salvo) {
+    estado.url = salvo;
+    mostrarPainel();
+    recarregar(false);
+  }
+}
+
+function conectar() {
+  var url = ($('entrada-url').value || '').trim();
+  var erro = $('erro-conexao');
+  erro.classList.add('oculto');
+
+  if (!/^https:\/\/script\.google\.com\/.*\/exec$/.test(url)) {
+    erro.textContent = 'O link precisa começar com https://script.google.com e terminar em /exec.';
+    erro.classList.remove('oculto');
+    return;
+  }
+
+  var botao = $('btn-conectar');
+  ocupado(botao, true, 'Conectando…');
+
+  chamar({ acao: 'ping' }, url).then(function (r) {
+    if (r.versao !== VERSAO_BACKEND_ESPERADA) {
+      erro.innerHTML = 'Esta planilha está com o Code.gs versão ' + escapar(String(r.versao)) +
+        ', mas o site espera a versão ' + VERSAO_BACKEND_ESPERADA +
+        '. Atualize o Code.gs e implante uma nova versão.';
+      erro.classList.remove('oculto');
+      ocupado(botao, false);
+      return;
+    }
+    estado.url = url;
+    estado.planilha = r.planilha || '';
+    guardar(CHAVE_URL, url);
+    ocupado(botao, false);
+    mostrarPainel();
+    recarregar(false);
+  }).catch(function (e) {
+    erro.textContent = e.message;
+    erro.classList.remove('oculto');
+    ocupado(botao, false);
+  });
+}
+
+function trocarPlanilha() {
+  var fundo = abrirModal(
+    '<h3>Trocar planilha</h3>' +
+    '<p class="sub">Cole o link /exec de outra planilha. Nada é apagado — o site apenas passa a usar a nova.</p>' +
+    '<div class="campo"><label for="nova-url">Link do Apps Script</label>' +
+    '<input type="url" id="nova-url" placeholder="https://script.google.com/macros/s/.../exec"></div>' +
+    '<div id="erro-troca" class="aviso aviso-erro oculto"></div>' +
+    '<div class="modal-acoes">' +
+    '<button class="btn" data-cancelar>Cancelar</button>' +
+    '<button class="btn btn-principal" data-ok>Conectar</button>' +
+    '</div>');
+  $('nova-url').value = estado.url;
+  fundo.querySelector('[data-cancelar]').onclick = fecharModal;
+  fundo.querySelector('[data-ok]').onclick = function () {
+    var botao = this;
+    var url = ($('nova-url').value || '').trim();
+    var erro = $('erro-troca');
+    erro.classList.add('oculto');
+    if (!/^https:\/\/script\.google\.com\/.*\/exec$/.test(url)) {
+      erro.textContent = 'O link precisa terminar em /exec.';
+      erro.classList.remove('oculto');
+      return;
+    }
+    ocupado(botao, true, 'Conectando…');
+    chamar({ acao: 'ping' }, url).then(function (r) {
+      if (r.versao !== VERSAO_BACKEND_ESPERADA) {
+        throw new Error('Essa planilha está com o Code.gs versão ' + r.versao + ' (o site espera a ' + VERSAO_BACKEND_ESPERADA + ').');
+      }
+      estado.url = url;
+      estado.planilha = r.planilha || '';
+      guardar(CHAVE_URL, url);
+      fecharModal();
+      torrada('Planilha trocada.');
+      recarregar(false);
+    }).catch(function (e) {
+      erro.textContent = e.message;
+      erro.classList.remove('oculto');
+      ocupado(botao, false);
+    });
+  };
+}
+
+function mostrarPainel() {
+  $('tela-conexao').classList.add('oculto');
+  $('tela-painel').classList.remove('oculto');
+}
+
+function recarregar(avisar) {
+  $('carregando-geral').classList.remove('oculto');
+  return chamar({ acao: 'carregar' }).then(function (r) {
+    estado.livros = r.livros || [];
+    estado.vendas = r.vendas || [];
+    $('carregando-geral').classList.add('oculto');
+    $('nome-planilha').textContent = estado.planilha ? ('Planilha: ' + estado.planilha) : '';
+    desenharTudo();
+    if (avisar) torrada('Dados atualizados.');
+  }).catch(function (e) {
+    $('carregando-geral').innerHTML = '<div class="aviso aviso-erro">' + escapar(e.message) + '</div>';
+    torrada(e.message, true);
+  });
+}
+
+function desenharTudo() {
+  desenharGraficos();
+  desenharListaLivros();
+  prepararFormularioVenda();
+  desenharListaVendas();
+  prepararRelatorios();
+}
+
+/* ---------------- abas ---------------- */
+
+function ligarAbas() {
+  var botoes = document.querySelectorAll('.abas button');
+  Array.prototype.forEach.call(botoes, function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(botoes, function (o) {
+        o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+        $(o.dataset.painel).classList.toggle('oculto', o !== b);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+  $('painel-estoque').classList.remove('oculto');
+}
+
+/* ---------------- calculos compartilhados ---------------- */
+
+function vendasReais() {
+  return estado.vendas.filter(function (v) { return !v.doacao; });
+}
+
+function totalEstoque() {
+  return estado.livros.reduce(function (s, l) { return s + l.valor * l.quantidade; }, 0);
+}
+
+function mapaLivros() {
+  var m = {};
+  estado.livros.forEach(function (l) { m[l.id] = l; });
+  return m;
+}
+</script>
+<script>
+/* ==================================================================
+   ESTOQUE — graficos, cadastro de obras e lista
+   ================================================================== */
+
+function ligarEstoque() {
+  $('form-livro').addEventListener('submit', salvarLivro);
+  $('btn-cancelar-livro').addEventListener('click', limparFormularioLivro);
+  $('arquivo-capa').addEventListener('change', escolherCapa);
+  $('btn-tirar-capa').addEventListener('click', tirarCapa);
+
+  var tempo = null;
+  $('busca-livros').addEventListener('input', function () {
+    var v = this.value;
+    clearTimeout(tempo);
+    tempo = setTimeout(function () {
+      estado.buscaLivros = v;
+      desenharListaLivros();
+    }, 200);
+  });
+
+  var tempoRank = null;
+  $('busca-rank').addEventListener('input', function () {
+    var v = this.value;
+    clearTimeout(tempoRank);
+    tempoRank = setTimeout(function () {
+      estado.buscaRank = v;
+      desenharRank();
+    }, 200);
+  });
+
+  $('periodo-grafico').addEventListener('change', function () {
+    $('datas-grafico').classList.toggle('oculto', this.value !== 'custom');
+    if (this.value === 'custom') {
+      if (!$('g-data-fim').value) {
+        $('g-data-fim').value = hojeISO();
+        $('g-data-inicio').value = somarDias(hojeISO(), -6);
+      }
+    }
+    desenharDias();
+  });
+  $('g-data-inicio').addEventListener('change', desenharDias);
+  $('g-data-fim').addEventListener('change', desenharDias);
+
+  ligarCarrossel();
+}
+
+/* ---------------- carrossel ---------------- */
+
+function ligarCarrossel() {
+  var trilho = $('trilho-graficos');
+  var pontos = $('pontinhos');
+  var total = trilho.children.length;
+
+  for (var i = 0; i < total; i++) {
+    var p = document.createElement('span');
+    pontos.appendChild(p);
+  }
+
+  function passo() {
+    var primeiro = trilho.children[0];
+    return primeiro ? primeiro.getBoundingClientRect().width + 12 : 280;
+  }
+
+  $('seta-esq').addEventListener('click', function () {
+    trilho.scrollBy({ left: -passo(), behavior: 'smooth' });
+  });
+  $('seta-dir').addEventListener('click', function () {
+    trilho.scrollBy({ left: passo(), behavior: 'smooth' });
+  });
+
+  function atualizar() {
+    var max = trilho.scrollWidth - trilho.clientWidth;
+    $('seta-esq').disabled = trilho.scrollLeft <= 4;
+    $('seta-dir').disabled = trilho.scrollLeft >= max - 4;
+    var atual = Math.round(trilho.scrollLeft / passo());
+    Array.prototype.forEach.call(pontos.children, function (p, i) {
+      p.className = i === atual ? 'ativo' : '';
+    });
+  }
+  trilho.addEventListener('scroll', atualizar, { passive: true });
+  window.addEventListener('resize', atualizar);
+  setTimeout(atualizar, 60);
+  window.atualizarSetas = atualizar;
+}
+
+/* ---------------- graficos ---------------- */
+
+function barrasHTML(itens, formatar) {
+  if (!itens.length) return '<div class="vazio-grafico">Nada por aqui ainda.</div>';
+  var maximo = Math.max.apply(null, itens.map(function (i) { return i.valor; }));
+  if (maximo <= 0) maximo = 1;
+  return itens.map(function (i) {
+    var largura = Math.max(2, Math.round(i.valor / maximo * 100));
+    return '<div class="linha-barra" title="' + escapar(i.rotulo + ': ' + formatar(i.valor)) + '">' +
+      '<span class="rotulo">' + escapar(i.rotulo) + '</span>' +
+      '<span class="trilha"><span class="preenche" style="width:' + largura + '%"></span></span>' +
+      '<span class="valor">' + escapar(formatar(i.valor)) + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+function desenharGraficos() {
+  var reais = vendasReais();
+  var mapa = mapaLivros();
+
+  /* 1 — valor em estoque */
+  var totalEst = totalEstoque();
+  var exemplares = estado.livros.reduce(function (s, l) { return s + l.quantidade; }, 0);
+  $('g-estoque-valor').textContent = dinheiro(totalEst);
+  $('g-estoque-sub').textContent = estado.livros.length + ' título' + (estado.livros.length === 1 ? '' : 's') +
+    ' · ' + exemplares + ' exemplar' + (exemplares === 1 ? '' : 'es');
+  var porValor = estado.livros.map(function (l) {
+    return { rotulo: l.titulo, valor: l.valor * l.quantidade };
+  }).filter(function (i) { return i.valor > 0; })
+    .sort(function (a, b) { return b.valor - a.valor; }).slice(0, 4);
+  $('g-estoque-barras').innerHTML = barrasHTML(porValor, dinheiro);
+
+  /* 2 — total vendido */
+  var totalVendas = reais.reduce(function (s, v) { return s + v.valorTotal; }, 0);
+  var exVendidos = reais.reduce(function (s, v) { return s + v.quantidade; }, 0);
+  var doados = estado.vendas.filter(function (v) { return v.doacao; })
+    .reduce(function (s, v) { return s + v.quantidade; }, 0);
+  $('g-vendas-valor').textContent = dinheiro(totalVendas);
+  $('g-vendas-sub').textContent = reais.length + ' venda' + (reais.length === 1 ? '' : 's') +
+    ' · ' + exVendidos + ' exemplar' + (exVendidos === 1 ? '' : 'es') +
+    (doados ? ' · ' + doados + ' doado' + (doados === 1 ? '' : 's') : '');
+  $('g-vendas-meses').innerHTML = barrasHTML(ultimosMeses(reais, 'valorTotal', 4), dinheiro);
+
+  /* 3 — rank */
+  desenharRank();
+
+  /* 4 — descontos */
+  var comDesconto = reais.filter(function (v) { return v.desconto > 0; });
+  var totalDesc = comDesconto.reduce(function (s, v) { return s + v.desconto; }, 0);
+  $('g-desconto-valor').textContent = dinheiro(totalDesc);
+  $('g-desconto-sub').textContent = comDesconto.length
+    ? 'em ' + comDesconto.length + ' venda' + (comDesconto.length === 1 ? '' : 's')
+    : 'nenhum desconto aplicado';
+  $('g-desconto-barras').innerHTML = barrasHTML(porObra(comDesconto, 'desconto', 4), dinheiro);
+
+  /* 5 — lucro */
+  var totalLucro = reais.reduce(function (s, v) { return s + v.lucro; }, 0);
+  $('g-lucro-valor').textContent = dinheiro(totalLucro);
+  var margem = totalVendas > 0 ? Math.round(totalLucro / totalVendas * 100) : 0;
+  $('g-lucro-sub').textContent = totalVendas > 0
+    ? margem + '% do que foi vendido'
+    : 'nenhuma venda registrada';
+  $('g-lucro-barras').innerHTML = barrasHTML(porObra(reais, 'lucro', 4), dinheiro);
+
+  /* 6 — periodo */
+  desenharDias();
+
+  if (window.atualizarSetas) setTimeout(window.atualizarSetas, 40);
+}
+
+function porObra(vendas, campo, limite) {
+  var soma = {};
+  vendas.forEach(function (v) {
+    soma[v.titulo] = (soma[v.titulo] || 0) + (Number(v[campo]) || 0);
+  });
+  return Object.keys(soma).map(function (t) { return { rotulo: t, valor: soma[t] }; })
+    .filter(function (i) { return i.valor > 0; })
+    .sort(function (a, b) { return b.valor - a.valor; })
+    .slice(0, limite || 99);
+}
+
+function ultimosMeses(vendas, campo, quantos) {
+  var soma = {};
+  vendas.forEach(function (v) {
+    var chave = String(v.data).slice(0, 7);
+    soma[chave] = (soma[chave] || 0) + (Number(v[campo]) || 0);
+  });
+  return Object.keys(soma).sort().slice(-quantos).reverse().map(function (c) {
+    var p = c.split('-');
+    return { rotulo: MESES_CURTO[Number(p[1]) - 1] + '/' + p[0].slice(2), valor: soma[c] };
+  });
+}
+
+function desenharRank() {
+  var reais = vendasReais();
+  var soma = {};
+  estado.livros.forEach(function (l) { soma[l.titulo] = 0; });
+  reais.forEach(function (v) { soma[v.titulo] = (soma[v.titulo] || 0) + v.quantidade; });
+
+  var busca = semAcento(estado.buscaRank).toLowerCase().trim();
+  var itens = Object.keys(soma)
+    .filter(function (t) { return !busca || semAcento(t).toLowerCase().indexOf(busca) !== -1; })
+    .map(function (t) { return { rotulo: t, valor: soma[t] }; })
+    .sort(function (a, b) { return b.valor - a.valor || a.rotulo.localeCompare(b.rotulo); });
+
+  $('g-rank').innerHTML = itens.length
+    ? barrasHTML(itens, function (n) { return n + ''; })
+    : '<div class="vazio-grafico">Nenhuma obra encontrada.</div>';
+}
+
+function desenharDias() {
+  var escolha = $('periodo-grafico').value;
+  var fim, inicio;
+
+  if (escolha === 'custom') {
+    inicio = $('g-data-inicio').value;
+    fim = $('g-data-fim').value;
+    if (!inicio || !fim) {
+      $('g-dias').innerHTML = '<div class="vazio-grafico">Escolha as duas datas.</div>';
+      $('g-dias-sub').textContent = '—';
+      return;
+    }
+    if (inicio > fim) { var t = inicio; inicio = fim; fim = t; }
+    var maxDias = 62;
+    if (diasEntre(inicio, fim) > maxDias) {
+      inicio = somarDias(fim, -(maxDias - 1));
+      $('g-data-inicio').value = inicio;
+    }
+    $('titulo-g-periodo').textContent = 'Vendas de ' + dataBonita(inicio) + ' a ' + dataBonita(fim);
+  } else {
+    var dias = Number(escolha);
+    fim = hojeISO();
+    inicio = somarDias(fim, -(dias - 1));
+    $('titulo-g-periodo').textContent = 'Vendas dos últimos ' + dias + ' dias';
+  }
+
+  var reais = vendasReais().filter(function (v) { return v.data >= inicio && v.data <= fim; });
+  var soma = {};
+  var dia = inicio;
+  var ordem = [];
+  var guarda = 0;
+  while (dia <= fim && guarda++ < 400) {
+    soma[dia] = 0;
+    ordem.push(dia);
+    dia = somarDias(dia, 1);
+  }
+  reais.forEach(function (v) { if (soma[v.data] !== undefined) soma[v.data] += v.valorTotal; });
+
+  var maximo = Math.max.apply(null, ordem.map(function (d) { return soma[d]; }).concat([0]));
+  var mostrarRotulo = ordem.length <= 10;
+  var passoRotulo = Math.ceil(ordem.length / 8);
+
+  $('g-dias').innerHTML = ordem.map(function (d, i) {
+    var altura = maximo > 0 ? Math.max(2, Math.round(soma[d] / maximo * 74)) : 2;
+    var p = d.split('-');
+    var rotulo = (mostrarRotulo || i % passoRotulo === 0) ? p[2] + '/' + p[1] : '';
+    return '<div class="barra-dia" title="' + escapar(dataBonita(d) + ': ' + dinheiro(soma[d])) + '">' +
+      (soma[d] > 0 && soma[d] === maximo ? '<span class="topo-valor">' + dinheiro(soma[d]).replace(',00', '') + '</span>' : '') +
+      '<span class="coluna" style="height:' + altura + 'px"></span>' +
+      '<span class="dia">' + rotulo + '</span></div>';
+  }).join('');
+
+  var total = ordem.reduce(function (s, d) { return s + soma[d]; }, 0);
+  $('g-dias-sub').textContent = dinheiro(total) + ' em ' + reais.length + ' venda' + (reais.length === 1 ? '' : 's');
+}
+
+function diasEntre(a, b) {
+  var pa = a.split('-'), pb = b.split('-');
+  var da = new Date(Number(pa[0]), Number(pa[1]) - 1, Number(pa[2]));
+  var db = new Date(Number(pb[0]), Number(pb[1]) - 1, Number(pb[2]));
+  return Math.round((db - da) / 86400000) + 1;
+}
+
+/* ---------------- capa ---------------- */
+
+function escolherCapa(ev) {
+  var arquivo = ev.target.files && ev.target.files[0];
+  if (!arquivo) return;
+  if (!/^image\//.test(arquivo.type)) {
+    torrada('Escolha um arquivo de imagem.', true);
+    return;
+  }
+  $('dica-capa').textContent = 'Preparando a imagem…';
+  var leitor = new FileReader();
+  leitor.onload = function () {
+    var img = new Image();
+    img.onload = function () {
+      var maxLado = 700;
+      var escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+      var largura = Math.round(img.width * escala);
+      var altura = Math.round(img.height * escala);
+      var tela = document.createElement('canvas');
+      tela.width = largura; tela.height = altura;
+      tela.getContext('2d').drawImage(img, 0, 0, largura, altura);
+      var url = tela.toDataURL('image/jpeg', 0.82);
+      estado.capaPendente = {
+        dados: url.split(',')[1],
+        mime: 'image/jpeg',
+        nome: 'capa-' + Date.now() + '.jpg'
+      };
+      mostrarPreviaCapa(url);
+      $('dica-capa').textContent = 'Imagem pronta. Ela vai para o Google Drive quando a obra for salva.';
+    };
+    img.onerror = function () {
+      torrada('Não consegui ler essa imagem.', true);
+      $('dica-capa').textContent = 'Opcional. Sem imagem, a obra aparece com um ícone de livro.';
+    };
+    img.src = leitor.result;
+  };
+  leitor.readAsDataURL(arquivo);
+}
+
+function mostrarPreviaCapa(url) {
+  var img = $('previa-capa');
+  if (url) {
+    img.src = url;
+    img.classList.remove('oculto');
+    $('previa-vazia').classList.add('oculto');
+    $('btn-tirar-capa').classList.remove('oculto');
+  } else {
+    img.removeAttribute('src');
+    img.classList.add('oculto');
+    $('previa-vazia').classList.remove('oculto');
+    $('btn-tirar-capa').classList.add('oculto');
+  }
+}
+
+function tirarCapa() {
+  estado.capaPendente = null;
+  estado.capaAtual = '';
+  $('arquivo-capa').value = '';
+  mostrarPreviaCapa('');
+  $('dica-capa').textContent = 'Opcional. Sem imagem, a obra aparece com um ícone de livro.';
+}
+
+/* ---------------- cadastro de obras ---------------- */
+
+function salvarLivro(ev) {
+  ev.preventDefault();
+  var botao = $('btn-salvar-livro');
+  var livro = {
+    id: $('livro-id').value || '',
+    titulo: $('livro-titulo').value.trim(),
+    valor: Number($('livro-valor').value),
+    lucro: Number($('livro-lucro').value),
+    quantidade: Math.round(Number($('livro-quantidade').value)),
+    imagem: estado.capaAtual || ''
+  };
+  if (!livro.titulo) { torrada('Informe o título da obra.', true); return; }
+  if (!(livro.valor >= 0)) { torrada('Informe o valor da obra.', true); return; }
+  if (!(livro.lucro >= 0)) { torrada('Informe o lucro por exemplar.', true); return; }
+  if (!(livro.quantidade >= 0)) { torrada('Informe a quantidade disponível.', true); return; }
+  if (livro.lucro > livro.valor) { torrada('O lucro não pode ser maior que o valor da obra.', true); return; }
+
+  ocupado(botao, true, 'Salvando…');
+
+  var antes = estado.capaPendente
+    ? chamar({ acao: 'salvarCapa', nome: estado.capaPendente.nome, mime: estado.capaPendente.mime, dados: estado.capaPendente.dados })
+        .then(function (r) { livro.imagem = r.url; })
+    : Promise.resolve();
+
+  antes.then(function () {
+    return chamar({ acao: 'salvarLivro', livro: livro });
+  }).then(function () {
+    torrada(livro.id ? 'Obra atualizada.' : 'Obra cadastrada.');
+    limparFormularioLivro();
+    return recarregar(false);
+  }).catch(function (e) {
+    torrada(e.message, true);
+  }).then(function () {
+    ocupado(botao, false);
+  });
+}
+
+function limparFormularioLivro() {
+  $('form-livro').reset();
+  $('livro-id').value = '';
+  estado.editandoLivro = null;
+  tirarCapa();
+  $('btn-salvar-livro').textContent = 'Salvar obra';
+  $('btn-cancelar-livro').classList.add('oculto');
+}
+
+function editarLivro(id) {
+  var livro = estado.livros.filter(function (l) { return l.id === id; })[0];
+  if (!livro) return;
+  estado.editandoLivro = id;
+  $('livro-id').value = livro.id;
+  $('livro-titulo').value = livro.titulo;
+  $('livro-valor').value = livro.valor;
+  $('livro-lucro').value = livro.lucro;
+  $('livro-quantidade').value = livro.quantidade;
+  estado.capaAtual = livro.imagem || '';
+  estado.capaPendente = null;
+  mostrarPreviaCapa(livro.imagem || '');
+  $('btn-salvar-livro').textContent = 'Salvar alterações';
+  $('btn-cancelar-livro').classList.remove('oculto');
+  $('form-livro').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function excluirLivro(id) {
+  var livro = estado.livros.filter(function (l) { return l.id === id; })[0];
+  if (!livro) return;
+  var vendasDaObra = estado.vendas.filter(function (v) { return v.livroId === id; }).length;
+  var texto = 'A obra "' + livro.titulo + '" sai do estoque.' +
+    (vendasDaObra ? ' As ' + vendasDaObra + ' venda(s) já registradas continuam na planilha.' : '');
+  confirmar('Excluir obra?', texto, 'Excluir', function () {
+    chamar({ acao: 'deletarLivro', id: id }).then(function () {
+      torrada('Obra excluída.');
+      return recarregar(false);
+    }).catch(function (e) { torrada(e.message, true); });
+  });
+}
+
+function abrirAlterarQuantidade(id) {
+  var livro = estado.livros.filter(function (l) { return l.id === id; })[0];
+  if (!livro) return;
+
+  var fundo = abrirModal(
+    '<h3>Alterar quantidade</h3>' +
+    '<p class="sub">' + escapar(livro.titulo) + '</p>' +
+    '<div style="background:var(--superficie-2);border-radius:10px;padding:12px;text-align:center;margin-bottom:14px">' +
+    '<div style="font-size:12px;color:var(--tinta-2)">quantidade atual</div>' +
+    '<div style="font-size:26px;font-weight:700">' + livro.quantidade + '</div></div>' +
+    '<div class="campo"><label><input type="radio" name="modo-qtd" value="chegou" checked> Chegaram mais exemplares</label>' +
+    '<label style="margin-top:6px"><input type="radio" name="modo-qtd" value="corrigir"> Corrigir a quantidade total</label></div>' +
+    '<div class="campo"><label for="qtd-numero" id="rotulo-qtd">Quantos chegaram?</label>' +
+    '<input type="number" id="qtd-numero" min="0" step="1" inputmode="numeric" value=""></div>' +
+    '<div id="previa-qtd" class="sub-numero"></div>' +
+    '<div class="dica" style="margin-top:8px">Diminuir aqui é uma correção de contagem — não é registrada como venda.</div>' +
+    '<div class="modal-acoes">' +
+    '<button class="btn" data-cancelar>Cancelar</button>' +
+    '<button class="btn btn-principal" data-ok>Salvar</button>' +
+    '</div>');
+
+  var entrada = $('qtd-numero');
+  var previa = $('previa-qtd');
+
+  function modo() {
+    var m = fundo.querySelector('input[name=modo-qtd]:checked').value;
+    $('rotulo-qtd').textContent = m === 'chegou' ? 'Quantos chegaram?' : 'Nova quantidade total';
+    return m;
+  }
+  function nova() {
+    var n = Math.round(Number(entrada.value) || 0);
+    return modo() === 'chegou' ? livro.quantidade + n : n;
+  }
+  function atualizarPrevia() {
+    if (entrada.value === '') { previa.textContent = ''; return; }
+    previa.textContent = 'Passa a ter ' + Math.max(0, nova()) + ' exemplar(es) em estoque.';
+  }
+  Array.prototype.forEach.call(fundo.querySelectorAll('input[name=modo-qtd]'), function (r) {
+    r.addEventListener('change', function () { modo(); atualizarPrevia(); });
+  });
+  entrada.addEventListener('input', atualizarPrevia);
+  setTimeout(function () { entrada.focus(); }, 80);
+
+  fundo.querySelector('[data-cancelar]').onclick = fecharModal;
+  fundo.querySelector('[data-ok]').onclick = function () {
+    var botao = this;
+    if (entrada.value === '') { torrada('Informe um número.', true); return; }
+    var q = nova();
+    if (q < 0) { torrada('A quantidade não pode ficar negativa.', true); return; }
+    ocupado(botao, true, 'Salvando…');
+    chamar({ acao: 'alterarQuantidade', id: id, quantidade: q }).then(function () {
+      fecharModal();
+      torrada('Estoque de "' + livro.titulo + '" agora é ' + q + '.');
+      return recarregar(false);
+    }).catch(function (e) {
+      torrada(e.message, true);
+      ocupado(botao, false);
+    });
+  };
+}
+
+/* ---------------- lista de obras ---------------- */
+
+function capaQuebrada(img) {
+  var caixa = document.createElement('div');
+  caixa.className = 'capa';
+  caixa.textContent = '📕';
+  if (img.parentNode) img.parentNode.replaceChild(caixa, img);
+}
+
+function desenharListaLivros() {
+  var busca = semAcento(estado.buscaLivros).toLowerCase().trim();
+  var lista = estado.livros.filter(function (l) {
+    return !busca || semAcento(l.titulo).toLowerCase().indexOf(busca) !== -1;
+  }).sort(function (a, b) { return a.titulo.localeCompare(b.titulo); });
+
+  $('conta-livros').textContent = estado.livros.length;
+
+  var alvo = $('lista-livros');
+  if (!estado.livros.length) {
+    alvo.innerHTML = '<div class="vazio">Nenhuma obra cadastrada ainda.</div>';
+    return;
+  }
+  if (!lista.length) {
+    alvo.innerHTML = '<div class="vazio">Nenhuma obra encontrada para “' + escapar(estado.buscaLivros) + '”.</div>';
+    return;
+  }
+
+  alvo.innerHTML = lista.map(function (l) {
+    var capa = l.imagem
+      ? '<img class="capa" src="' + escapar(l.imagem) + '" alt="" loading="lazy" onerror="capaQuebrada(this)">'
+      : '<div class="capa">📕</div>';
+    var etiqueta = l.quantidade === 0
+      ? '<span class="etiqueta zerado">sem estoque</span>'
+      : '<span class="etiqueta">' + l.quantidade + ' em estoque</span>';
+    return '<div class="item">' + capa +
+      '<div class="item-corpo">' +
+      '<div class="item-titulo">' + escapar(l.titulo) + etiqueta + '</div>' +
+      '<div class="item-info">' + dinheiro(l.valor) + ' · lucro ' + dinheiro(l.lucro) + ' por exemplar</div>' +
+      '<div class="item-info">Total em estoque: ' + dinheiro(l.valor * l.quantidade) + '</div>' +
+      '<div class="item-acoes">' +
+      '<button class="btn btn-pequeno" onclick="editarLivro(\'' + escapar(l.id) + '\')">✏️ Editar</button>' +
+      '<button class="btn btn-pequeno" onclick="abrirAlterarQuantidade(\'' + escapar(l.id) + '\')">🔢 Alterar quantidade</button>' +
+      '<button class="btn btn-pequeno btn-perigo" onclick="excluirLivro(\'' + escapar(l.id) + '\')">🗑️ Excluir</button>' +
+      '</div></div></div>';
+  }).join('');
+}
+</script>
+<script>
+/* ==================================================================
+   VENDAS — formulario e lista
+   ================================================================== */
+
+function ligarVendas() {
+  $('form-venda').addEventListener('submit', salvarVenda);
+  $('btn-cancelar-venda').addEventListener('click', limparFormularioVenda);
+
+  $('venda-livro').addEventListener('change', function () {
+    var livro = estado.livros.filter(function (l) { return l.id === $('venda-livro').value; })[0];
+    if (livro) {
+      $('venda-valor').value = livro.valor;
+      guardar(CHAVE_LIVRO, livro.id);
+      $('dica-estoque-livro').textContent = livro.quantidade + ' exemplar(es) em estoque · ' +
+        dinheiro(livro.valor) + ' cada';
+    } else {
+      $('dica-estoque-livro').textContent = '';
+    }
+    atualizarResumoVenda();
+  });
+
+  $('venda-desconto-sn').addEventListener('change', function () {
+    var sim = this.value === 'sim';
+    $('campo-desconto').classList.toggle('oculto', !sim);
+    if (!sim) $('venda-desconto').value = '';
+    atualizarResumoVenda();
+  });
+
+  $('venda-doacao').addEventListener('change', function () {
+    var doacao = this.value === 'sim';
+    $('venda-valor').disabled = doacao;
+    $('venda-desconto-sn').disabled = doacao;
+    if (doacao) {
+      $('venda-desconto-sn').value = 'nao';
+      $('venda-desconto').value = '';
+      $('campo-desconto').classList.add('oculto');
+    }
+    atualizarResumoVenda();
+  });
+
+  ['venda-quantidade', 'venda-valor', 'venda-desconto'].forEach(function (id) {
+    $(id).addEventListener('input', atualizarResumoVenda);
+  });
+
+  var tempo = null;
+  $('busca-vendas').addEventListener('input', function () {
+    var v = this.value;
+    clearTimeout(tempo);
+    tempo = setTimeout(function () {
+      estado.buscaVendas = v;
+      desenharListaVendas();
+    }, 200);
+  });
+}
+
+function prepararFormularioVenda() {
+  var select = $('venda-livro');
+  var escolhido = select.value || ler(CHAVE_LIVRO);
+  var lista = estado.livros.slice().sort(function (a, b) { return a.titulo.localeCompare(b.titulo); });
+
+  select.innerHTML = '<option value="">— escolha uma obra —</option>' + lista.map(function (l) {
+    return '<option value="' + escapar(l.id) + '"' + (l.quantidade === 0 ? ' data-sem-estoque="1"' : '') + '>' +
+      escapar(l.titulo) + (l.quantidade === 0 ? ' (sem estoque)' : ' (' + l.quantidade + ')') + '</option>';
+  }).join('');
+
+  if (escolhido && lista.some(function (l) { return l.id === escolhido; })) {
+    select.value = escolhido;
+    select.dispatchEvent(new Event('change'));
+  }
+
+  if (!$('venda-data').value) $('venda-data').value = hojeISO();
+  if (!$('venda-responsavel').value) $('venda-responsavel').value = ler(CHAVE_RESPONSAVEL);
+
+  var responsaveis = {}, clientes = {};
+  estado.vendas.forEach(function (v) {
+    if (v.responsavel) responsaveis[v.responsavel] = 1;
+    if (v.cliente) clientes[v.cliente] = 1;
+  });
+  $('lista-responsaveis').innerHTML = Object.keys(responsaveis).sort().map(function (n) {
+    return '<option value="' + escapar(n) + '">';
+  }).join('');
+  $('lista-clientes').innerHTML = Object.keys(clientes).sort().map(function (n) {
+    return '<option value="' + escapar(n) + '">';
+  }).join('');
+
+  atualizarResumoVenda();
+}
+
+function atualizarResumoVenda() {
+  var doacao = $('venda-doacao').value === 'sim';
+  var qtd = Math.round(Number($('venda-quantidade').value) || 0);
+  var valor = Number($('venda-valor').value) || 0;
+  var desconto = $('venda-desconto-sn').value === 'sim' ? (Number($('venda-desconto').value) || 0) : 0;
+  var caixa = $('resumo-venda');
+
+  if (!$('venda-livro').value || qtd < 1) {
+    caixa.textContent = 'Escolha a obra e a quantidade para ver o total.';
+    return;
+  }
+  if (doacao) {
+    caixa.innerHTML = '<strong>Doação</strong> · ' + qtd + ' exemplar(es) sai(em) do estoque, sem entrar em vendas nem em lucro.';
+    return;
+  }
+  var total = Math.max(0, valor * qtd - desconto);
+  caixa.innerHTML = '<strong>Total: ' + dinheiro(total) + '</strong>' +
+    '<div style="color:var(--tinta-2);font-size:13px;margin-top:2px">' +
+    qtd + ' × ' + dinheiro(valor) + (desconto > 0 ? ' − ' + dinheiro(desconto) + ' de desconto' : '') + '</div>';
+}
+
+function salvarVenda(ev) {
+  ev.preventDefault();
+  var botao = $('btn-salvar-venda');
+  var doacao = $('venda-doacao').value === 'sim';
+  var temDesconto = $('venda-desconto-sn').value === 'sim';
+
+  var venda = {
+    id: $('venda-id').value || '',
+    data: $('venda-data').value,
+    responsavel: $('venda-responsavel').value.trim(),
+    cliente: $('venda-cliente').value.trim(),
+    livroId: $('venda-livro').value,
+    quantidade: Math.round(Number($('venda-quantidade').value) || 0),
+    valorUnitario: doacao ? 0 : (Number($('venda-valor').value) || 0),
+    desconto: (!doacao && temDesconto) ? (Number($('venda-desconto').value) || 0) : 0,
+    doacao: doacao,
+    observacoes: $('venda-observacoes').value.trim()
+  };
+
+  if (!venda.data) { torrada('Informe a data da venda.', true); return; }
+  if (!venda.responsavel) { torrada('Informe o nome do responsável.', true); return; }
+  if (!venda.cliente) { torrada('Informe o cliente.', true); return; }
+  if (!venda.livroId) { torrada('Escolha o livro vendido.', true); return; }
+  if (venda.quantidade < 1) { torrada('A quantidade precisa ser pelo menos 1.', true); return; }
+  if (temDesconto && !doacao && $('venda-desconto').value === '') {
+    torrada('Informe o valor do desconto.', true); return;
+  }
+  if (!doacao && venda.desconto > venda.valorUnitario * venda.quantidade) {
+    torrada('O desconto é maior que o valor total da venda.', true); return;
+  }
+
+  ocupado(botao, true, 'Salvando…');
+  chamar({ acao: 'salvarVenda', venda: venda }).then(function (r) {
+    guardar(CHAVE_RESPONSAVEL, venda.responsavel);
+    guardar(CHAVE_LIVRO, venda.livroId);
+    var editou = !!venda.id;
+    limparFormularioVenda();
+    if (editou) {
+      torrada('Venda atualizada.');
+    } else if (r.doacao) {
+      torrada('Doação registrada — ' + r.quantidade + ' exemplar(es) de "' + r.titulo + '" saiu do estoque.');
+    } else {
+      torrada('Venda registrada com sucesso — subtraído ' + dinheiro(r.valorTotal) + ' do estoque geral.');
+    }
+    return recarregar(false);
+  }).catch(function (e) {
+    torrada(e.message, true);
+  }).then(function () {
+    ocupado(botao, false);
+  });
+}
+
+function limparFormularioVenda() {
+  var responsavel = $('venda-responsavel').value;
+  var livro = $('venda-livro').value;
+  $('form-venda').reset();
+  $('venda-id').value = '';
+  estado.editandoVenda = null;
+  $('venda-data').value = hojeISO();
+  $('venda-responsavel').value = responsavel;
+  $('venda-quantidade').value = 1;
+  $('venda-valor').disabled = false;
+  $('venda-desconto-sn').disabled = false;
+  $('campo-desconto').classList.add('oculto');
+  $('venda-livro').value = livro;
+  $('venda-livro').dispatchEvent(new Event('change'));
+  $('btn-salvar-venda').textContent = 'Salvar venda';
+  $('btn-cancelar-venda').classList.add('oculto');
+}
+
+function editarVenda(id) {
+  var venda = estado.vendas.filter(function (v) { return v.id === id; })[0];
+  if (!venda) return;
+  estado.editandoVenda = id;
+  $('venda-id').value = venda.id;
+  $('venda-data').value = venda.data;
+  $('venda-responsavel').value = venda.responsavel;
+  $('venda-cliente').value = venda.cliente;
+  $('venda-livro').value = venda.livroId;
+  $('venda-quantidade').value = venda.quantidade;
+  $('venda-valor').value = venda.valorUnitario;
+  $('venda-doacao').value = venda.doacao ? 'sim' : 'nao';
+  $('venda-doacao').dispatchEvent(new Event('change'));
+  $('venda-desconto-sn').value = venda.desconto > 0 ? 'sim' : 'nao';
+  $('campo-desconto').classList.toggle('oculto', !(venda.desconto > 0));
+  $('venda-desconto').value = venda.desconto > 0 ? venda.desconto : '';
+  $('venda-observacoes').value = venda.observacoes;
+  atualizarResumoVenda();
+  $('btn-salvar-venda').textContent = 'Salvar alterações';
+  $('btn-cancelar-venda').classList.remove('oculto');
+  document.querySelector('[data-painel=painel-vendas]').click();
+  $('form-venda').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function excluirVenda(id) {
+  var venda = estado.vendas.filter(function (v) { return v.id === id; })[0];
+  if (!venda) return;
+  confirmar('Excluir venda?',
+    'A venda de "' + venda.titulo + '" para ' + venda.cliente + ' será apagada e os ' +
+    venda.quantidade + ' exemplar(es) voltam para o estoque.',
+    'Excluir', function () {
+      chamar({ acao: 'deletarVenda', id: id }).then(function () {
+        torrada('Venda excluída — estoque devolvido.');
+        return recarregar(false);
+      }).catch(function (e) { torrada(e.message, true); });
+    });
+}
+
+function desenharListaVendas() {
+  var busca = semAcento(estado.buscaVendas).toLowerCase().trim();
+  var lista = estado.vendas.filter(function (v) {
+    if (!busca) return true;
+    var alvo = semAcento(v.titulo + ' ' + v.cliente + ' ' + v.responsavel + ' ' + v.observacoes).toLowerCase();
+    return alvo.indexOf(busca) !== -1;
+  }).sort(function (a, b) {
+    if (a.data !== b.data) return a.data < b.data ? 1 : -1;
+    return (a.registradoEm < b.registradoEm) ? 1 : -1;
+  });
+
+  $('conta-vendas').textContent = estado.vendas.length;
+  var alvo = $('lista-vendas');
+
+  if (!estado.vendas.length) {
+    alvo.innerHTML = '<div class="vazio">Nenhuma venda registrada ainda.</div>';
+    return;
+  }
+  if (!lista.length) {
+    alvo.innerHTML = '<div class="vazio">Nenhuma venda encontrada para “' + escapar(estado.buscaVendas) + '”.</div>';
+    return;
+  }
+
+  alvo.innerHTML = lista.slice(0, 300).map(function (v) {
+    var valor = v.doacao
+      ? '<span class="etiqueta doacao">doação</span>'
+      : '<strong>' + dinheiro(v.valorTotal) + '</strong>' +
+        (v.desconto > 0 ? ' <span class="etiqueta">− ' + dinheiro(v.desconto) + '</span>' : '');
+    return '<div class="item"><div class="item-corpo">' +
+      '<div class="item-titulo">' + escapar(v.titulo) +
+      (v.quantidade > 1 ? ' <span class="etiqueta">' + v.quantidade + '×</span>' : '') + '</div>' +
+      '<div class="item-info">' + dataBonita(v.data) + ' · ' + escapar(v.cliente) +
+      ' · resp. ' + escapar(v.responsavel) + '</div>' +
+      '<div class="item-info">' + valor + '</div>' +
+      (v.observacoes ? '<div class="item-info">📝 ' + escapar(v.observacoes) + '</div>' : '') +
+      '<div class="item-acoes">' +
+      '<button class="btn btn-pequeno" onclick="editarVenda(\'' + escapar(v.id) + '\')">✏️ Editar</button>' +
+      '<button class="btn btn-pequeno btn-perigo" onclick="excluirVenda(\'' + escapar(v.id) + '\')">🗑️ Excluir</button>' +
+      '</div></div></div>';
+  }).join('') +
+  (lista.length > 300 ? '<div class="vazio">Mostrando as 300 vendas mais recentes de ' + lista.length + '. Use a busca para encontrar as demais.</div>' : '');
+}
+</script>
+<script>
+/* ==================================================================
+   RELATORIOS — PDFs gerados no proprio aparelho (jsPDF)
+   ================================================================== */
+
+var URL_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+
+function carregarJsPDF() {
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+  return new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = URL_JSPDF;
+    s.onload = function () { resolve(); };
+    s.onerror = function () { reject(new Error('Não consegui carregar o gerador de PDF. Confira a internet e tente de novo.')); };
+    document.head.appendChild(s);
+  });
+}
+
+function ligarRelatorios() {
+  $('btn-rel-mes').addEventListener('click', function () { gerar(this, relatorioMes); });
+  $('btn-rel-ano').addEventListener('click', function () { gerar(this, relatorioAno); });
+  $('btn-rel-periodo').addEventListener('click', function () { gerar(this, relatorioPeriodo); });
+  $('rel-mes').addEventListener('change', atualizarResumosRelatorio);
+  $('rel-ano').addEventListener('change', atualizarResumosRelatorio);
+  $('rel-inicio').addEventListener('change', atualizarResumosRelatorio);
+  $('rel-fim').addEventListener('change', atualizarResumosRelatorio);
+}
+
+function gerar(botao, fn) {
+  ocupado(botao, true, 'Gerando…');
+  carregarJsPDF().then(function () {
+    return fn();
+  }).catch(function (e) {
+    torrada(e.message, true);
+  }).then(function () {
+    ocupado(botao, false);
+  });
+}
+
+function prepararRelatorios() {
+  var hoje = hojeISO();
+  if (!$('rel-mes').value) $('rel-mes').value = hoje.slice(0, 7);
+  if (!$('rel-inicio').value) $('rel-inicio').value = somarDias(hoje, -29);
+  if (!$('rel-fim').value) $('rel-fim').value = hoje;
+
+  var anos = {};
+  anos[hoje.slice(0, 4)] = 1;
+  estado.vendas.forEach(function (v) { if (v.data) anos[v.data.slice(0, 4)] = 1; });
+  var lista = Object.keys(anos).sort().reverse();
+  var atual = $('rel-ano').value;
+  $('rel-ano').innerHTML = lista.map(function (a) {
+    return '<option value="' + a + '">' + a + '</option>';
+  }).join('');
+  if (atual && lista.indexOf(atual) !== -1) $('rel-ano').value = atual;
+
+  atualizarResumosRelatorio();
+}
+
+function atualizarResumosRelatorio() {
+  var mes = $('rel-mes').value;
+  $('resumo-rel-mes').textContent = mes
+    ? resumoTexto(vendasNoIntervalo(mes + '-01', fimDoMes(mes)))
+    : 'Escolha um mês.';
+
+  var ano = $('rel-ano').value;
+  $('resumo-rel-ano').textContent = ano
+    ? resumoTexto(vendasNoIntervalo(ano + '-01-01', ano + '-12-31'))
+    : 'Escolha um ano.';
+
+  var i = $('rel-inicio').value, f = $('rel-fim').value;
+  if (!i || !f) {
+    $('resumo-rel-periodo').textContent = 'Escolha as duas datas.';
+  } else if (i > f) {
+    $('resumo-rel-periodo').textContent = 'A data de início é depois da data de fim.';
+  } else if (diasEntre(i, f) > 366) {
+    $('resumo-rel-periodo').textContent = 'O período não pode passar de um ano.';
+  } else {
+    $('resumo-rel-periodo').textContent = resumoTexto(vendasNoIntervalo(i, f));
+  }
+
+  $('btn-rel-mes').disabled = !mes;
+  $('btn-rel-ano').disabled = !ano;
+  $('btn-rel-periodo').disabled = !(i && f && i <= f && diasEntre(i, f) <= 366);
+}
+
+function resumoTexto(lista) {
+  var reais = lista.filter(function (v) { return !v.doacao; });
+  if (!lista.length) return 'Nenhuma venda nesse período.';
+  var total = reais.reduce(function (s, v) { return s + v.valorTotal; }, 0);
+  var exemplares = reais.reduce(function (s, v) { return s + v.quantidade; }, 0);
+  var doacoes = lista.length - reais.length;
+  return reais.length + ' venda(s) · ' + exemplares + ' exemplar(es) · ' + dinheiro(total) +
+    (doacoes ? ' · ' + doacoes + ' doação(ões)' : '');
+}
+
+function fimDoMes(mes) {
+  var p = mes.split('-');
+  var d = new Date(Number(p[0]), Number(p[1]), 0);
+  return p[0] + '-' + p[1] + '-' + pad2(d.getDate());
+}
+
+function vendasNoIntervalo(inicio, fim) {
+  return estado.vendas.filter(function (v) {
+    return v.data >= inicio && v.data <= fim;
+  }).sort(function (a, b) { return a.data < b.data ? -1 : (a.data > b.data ? 1 : 0); });
+}
+
+/* ---------------- montagem do PDF ---------------- */
+
+function novoPdf() {
+  var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+  var estadoPdf = { doc: doc, y: 18, margem: 14, larguraUtil: 182, pagina: 1 };
+  return estadoPdf;
+}
+
+function quebra(p, altura) {
+  if (p.y + altura > 282) {
+    p.doc.addPage();
+    p.pagina++;
+    p.y = 18;
+    return true;
+  }
+  return false;
+}
+
+function titulo(p, texto, sub) {
+  p.doc.setFont('helvetica', 'bold');
+  p.doc.setFontSize(16);
+  p.doc.text(texto, p.margem, p.y);
+  p.y += 6;
+  if (sub) {
+    p.doc.setFont('helvetica', 'normal');
+    p.doc.setFontSize(10);
+    p.doc.setTextColor(110);
+    p.doc.text(sub, p.margem, p.y);
+    p.doc.setTextColor(0);
+    p.y += 6;
+  }
+  p.doc.setDrawColor(200);
+  p.doc.line(p.margem, p.y, p.margem + p.larguraUtil, p.y);
+  p.y += 7;
+}
+
+function subtitulo(p, texto) {
+  quebra(p, 14);
+  p.doc.setFont('helvetica', 'bold');
+  p.doc.setFontSize(12);
+  p.doc.text(texto, p.margem, p.y);
+  p.y += 6;
+}
+
+function paragrafo(p, texto) {
+  quebra(p, 8);
+  p.doc.setFont('helvetica', 'normal');
+  p.doc.setFontSize(10);
+  p.doc.text(texto, p.margem, p.y);
+  p.y += 5;
+}
+
+function cortar(doc, texto, largura) {
+  texto = String(texto == null ? '' : texto);
+  if (doc.getTextWidth(texto) <= largura) return texto;
+  while (texto.length > 1 && doc.getTextWidth(texto + '...') > largura) {
+    texto = texto.slice(0, -1);
+  }
+  return texto + '...';
+}
+
+function tabela(p, colunas, linhas) {
+  var doc = p.doc;
+
+  function cabecalho() {
+    quebra(p, 12);
+    doc.setFillColor(240, 240, 237);
+    doc.rect(p.margem, p.y - 4.6, p.larguraUtil, 6.6, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    var x = p.margem;
+    colunas.forEach(function (c) {
+      var texto = cortar(doc, c.titulo, c.largura - 2);
+      doc.text(texto, c.direita ? x + c.largura - 2 - doc.getTextWidth(texto) : x + 1, p.y);
+      x += c.largura;
+    });
+    p.y += 6;
+  }
+
+  cabecalho();
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+
+  linhas.forEach(function (linha, indice) {
+    if (quebra(p, 8)) {
+      cabecalho();
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+    }
+    if (indice % 2 === 1) {
+      doc.setFillColor(249, 249, 247);
+      doc.rect(p.margem, p.y - 4, p.larguraUtil, 5.6, 'F');
+    }
+    var x = p.margem;
+    colunas.forEach(function (c, i) {
+      var texto = cortar(doc, linha[i], c.largura - 2);
+      doc.text(texto, c.direita ? x + c.largura - 2 - doc.getTextWidth(texto) : x + 1, p.y);
+      x += c.largura;
+    });
+    p.y += 5.6;
+  });
+  p.y += 4;
+}
+
+function rodapes(p, nomeRelatorio) {
+  var doc = p.doc;
+  var total = doc.getNumberOfPages();
+  for (var i = 1; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(140);
+    doc.text(nomeRelatorio, 14, 290);
+    doc.text('Pagina ' + i + ' de ' + total, 196, 290, { align: 'right' });
+    doc.setTextColor(0);
+  }
+}
+
+function blocoGeral(p, lista) {
+  var reais = lista.filter(function (v) { return !v.doacao; });
+  var doacoes = lista.filter(function (v) { return v.doacao; });
+  var total = reais.reduce(function (s, v) { return s + v.valorTotal; }, 0);
+  var lucro = reais.reduce(function (s, v) { return s + v.lucro; }, 0);
+  var desconto = reais.reduce(function (s, v) { return s + v.desconto; }, 0);
+  var exemplares = reais.reduce(function (s, v) { return s + v.quantidade; }, 0);
+  var exDoados = doacoes.reduce(function (s, v) { return s + v.quantidade; }, 0);
+
+  subtitulo(p, 'Informações gerais');
+  tabela(p,
+    [{ titulo: 'Indicador', largura: 122 }, { titulo: 'Valor', largura: 60, direita: true }],
+    [
+      ['Total vendido', dinheiro(total)],
+      ['Lucro total', dinheiro(lucro)],
+      ['Descontos aplicados', dinheiro(desconto)],
+      ['Vendas registradas', String(reais.length)],
+      ['Livros vendidos', String(exemplares)],
+      ['Ticket médio por venda', dinheiro(reais.length ? total / reais.length : 0)],
+      ['Doações', doacoes.length + ' (' + exDoados + ' exemplar(es))']
+    ]);
+}
+
+function blocoPorObra(p, lista) {
+  var reais = lista.filter(function (v) { return !v.doacao; });
+  var soma = {};
+  reais.forEach(function (v) {
+    if (!soma[v.titulo]) soma[v.titulo] = { qtd: 0, valor: 0, lucro: 0 };
+    soma[v.titulo].qtd += v.quantidade;
+    soma[v.titulo].valor += v.valorTotal;
+    soma[v.titulo].lucro += v.lucro;
+  });
+  var chaves = Object.keys(soma).sort(function (a, b) { return soma[b].qtd - soma[a].qtd; });
+
+  subtitulo(p, 'Vendas por obra');
+  if (!chaves.length) {
+    paragrafo(p, 'Nenhuma venda no período.');
+    return;
+  }
+  tabela(p,
+    [{ titulo: 'Obra', largura: 102 },
+     { titulo: 'Exemplares', largura: 26, direita: true },
+     { titulo: 'Lucro', largura: 27, direita: true },
+     { titulo: 'Total', largura: 27, direita: true }],
+    chaves.map(function (t) {
+      return [t, String(soma[t].qtd), dinheiro(soma[t].lucro), dinheiro(soma[t].valor)];
+    }));
+}
+
+var COLUNAS_VENDAS = [
+  { titulo: 'Data', largura: 20 },
+  { titulo: 'Responsável', largura: 30 },
+  { titulo: 'Cliente', largura: 32 },
+  { titulo: 'Obra', largura: 52 },
+  { titulo: 'Qtd', largura: 11, direita: true },
+  { titulo: 'Desc.', largura: 19, direita: true },
+  { titulo: 'Valor', largura: 18, direita: true }
+];
+
+function linhaVenda(v) {
+  return [dataBonita(v.data), v.responsavel, v.cliente, v.titulo, String(v.quantidade),
+          v.desconto > 0 ? dinheiro(v.desconto) : '—',
+          v.doacao ? 'doação' : dinheiro(v.valorTotal)];
+}
+
+function blocoVendas(p, lista, agruparPorMes) {
+  subtitulo(p, 'Vendas realizadas');
+  if (!lista.length) {
+    paragrafo(p, 'Nenhuma venda no período.');
+    return;
+  }
+  if (!agruparPorMes) {
+    tabela(p, COLUNAS_VENDAS, lista.map(linhaVenda));
+    return;
+  }
+  var meses = {};
+  lista.forEach(function (v) {
+    var chave = v.data.slice(0, 7);
+    (meses[chave] = meses[chave] || []).push(v);
+  });
+  Object.keys(meses).sort().forEach(function (chave) {
+    var p2 = chave.split('-');
+    var doMes = meses[chave];
+    var totalMes = doMes.filter(function (v) { return !v.doacao; })
+      .reduce(function (s, v) { return s + v.valorTotal; }, 0);
+    quebra(p, 20);
+    p.doc.setFont('helvetica', 'bold');
+    p.doc.setFontSize(10);
+    p.doc.text(MESES[Number(p2[1]) - 1] + ' de ' + p2[0] + ' — ' + doMes.length +
+      ' registro(s) · ' + dinheiro(totalMes), p.margem, p.y);
+    p.y += 8;
+    tabela(p, COLUNAS_VENDAS, doMes.map(linhaVenda));
+  });
+}
+
+function baixar(p, nomeArquivo, nomeRelatorio) {
+  rodapes(p, nomeRelatorio);
+  p.doc.save(semAcento(nomeArquivo));
+  torrada('PDF gerado: ' + semAcento(nomeArquivo));
+}
+
+/* ---------------- os tres relatorios ---------------- */
+
+function relatorioMes() {
+  var mes = $('rel-mes').value;
+  if (!mes) return;
+  var pm = mes.split('-');
+  var lista = vendasNoIntervalo(mes + '-01', fimDoMes(mes));
+  var p = novoPdf();
+  var nome = 'Relatório de vendas — ' + MESES[Number(pm[1]) - 1] + ' de ' + pm[0];
+  titulo(p, nome, 'Gerado em ' + dataBonita(hojeISO()) + (estado.planilha ? ' · ' + estado.planilha : ''));
+  blocoGeral(p, lista);
+  blocoPorObra(p, lista);
+  blocoVendas(p, lista, false);
+  baixar(p, 'relatorio-vendas-' + mes + '.pdf', semAcento(nome));
+}
+
+function relatorioAno() {
+  var ano = $('rel-ano').value;
+  if (!ano) return;
+  var lista = vendasNoIntervalo(ano + '-01-01', ano + '-12-31');
+  var p = novoPdf();
+  var nome = 'Relatório de vendas — ano de ' + ano;
+  titulo(p, nome, 'Gerado em ' + dataBonita(hojeISO()) + (estado.planilha ? ' · ' + estado.planilha : ''));
+  blocoGeral(p, lista);
+  blocoPorObra(p, lista);
+  blocoVendas(p, lista, true);
+  baixar(p, 'relatorio-vendas-' + ano + '.pdf', semAcento(nome));
+}
+
+function relatorioPeriodo() {
+  var inicio = $('rel-inicio').value, fim = $('rel-fim').value;
+  if (!inicio || !fim) return;
+  if (inicio > fim) { torrada('A data de início é depois da data de fim.', true); return; }
+  if (diasEntre(inicio, fim) > 366) { torrada('O período não pode passar de um ano.', true); return; }
+
+  var lista = vendasNoIntervalo(inicio, fim).slice().reverse();
+  var p = novoPdf();
+  var nome = 'Relatório de vendas — ' + dataBonita(inicio) + ' a ' + dataBonita(fim);
+  titulo(p, nome, 'Gerado em ' + dataBonita(hojeISO()) + (estado.planilha ? ' · ' + estado.planilha : ''));
+  blocoGeral(p, lista);
+  blocoPorObra(p, lista);
+  blocoVendas(p, lista, false);
+  baixar(p, 'relatorio-vendas-' + inicio + '-a-' + fim + '.pdf', semAcento(nome));
+}
+
+/* ---------------- partida ---------------- */
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', iniciar);
+} else {
+  iniciar();
+}
+</script>
+</body>
+</html>
