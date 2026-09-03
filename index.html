@@ -131,10 +131,13 @@ main{flex:1;padding:14px 14px 60px;max-width:900px;width:100%;margin:0 auto}
 .carrossel{position:relative;margin-bottom:16px}
 .carrossel-trilho{
   display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;
-  scroll-snap-type:x mandatory;padding:2px 30px 8px;scroll-padding-left:30px;
-  scrollbar-width:none;-ms-overflow-style:none;
+  scroll-snap-type:x mandatory;padding:2px 4px 14px;scroll-padding-left:4px;
+  scrollbar-width:thin;scrollbar-color:var(--linha-base) transparent;
 }
-.carrossel-trilho::-webkit-scrollbar{display:none}
+.carrossel-trilho::-webkit-scrollbar{height:6px}
+.carrossel-trilho::-webkit-scrollbar-track{background:transparent}
+.carrossel-trilho::-webkit-scrollbar-thumb{background:var(--linha-base);border-radius:999px}
+.carrossel-trilho::-webkit-scrollbar-thumb:hover{background:var(--serie)}
 .cartao-grafico{
   scroll-snap-align:start;flex:0 0 min(280px, 82%);
   background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio);
@@ -145,15 +148,6 @@ main{flex:1;padding:14px 14px 60px;max-width:900px;width:100%;margin:0 auto}
 .numero-heroi{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .numero-heroi.bom{color:var(--bom)}
 .sub-numero{font-size:13px;color:var(--tinta-2);margin-top:4px}
-.seta{
-  position:absolute;top:50%;transform:translateY(-50%);z-index:5;
-  width:34px;height:34px;border-radius:50%;border:1px solid var(--borda);
-  background:var(--superficie);color:var(--tinta);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--sombra);
-}
-.seta[disabled]{opacity:.3;cursor:default}
-.seta-esq{left:-2px}
-.seta-dir{right:-2px}
 .pontinhos{display:flex;gap:5px;justify-content:center;margin-top:2px}
 .pontinhos span{width:6px;height:6px;border-radius:50%;background:var(--linha-base)}
 .pontinhos span.ativo{background:var(--serie);width:16px;border-radius:3px}
@@ -286,8 +280,6 @@ img.capa{display:block}
     <section id="painel-estoque" class="oculto">
 
       <div class="carrossel">
-        <button class="seta seta-esq" id="seta-esq" aria-label="Gráfico anterior">‹</button>
-        <button class="seta seta-dir" id="seta-dir" aria-label="Próximo gráfico">›</button>
         <div class="carrossel-trilho" id="trilho-graficos">
 
           <article class="cartao-grafico">
@@ -907,17 +899,7 @@ function ligarCarrossel() {
     return primeiro ? primeiro.getBoundingClientRect().width + 12 : 280;
   }
 
-  $('seta-esq').addEventListener('click', function () {
-    trilho.scrollBy({ left: -passo(), behavior: 'smooth' });
-  });
-  $('seta-dir').addEventListener('click', function () {
-    trilho.scrollBy({ left: passo(), behavior: 'smooth' });
-  });
-
   function atualizar() {
-    var max = trilho.scrollWidth - trilho.clientWidth;
-    $('seta-esq').disabled = trilho.scrollLeft <= 4;
-    $('seta-dir').disabled = trilho.scrollLeft >= max - 4;
     var atual = Math.round(trilho.scrollLeft / passo());
     Array.prototype.forEach.call(pontos.children, function (p, i) {
       p.className = i === atual ? 'ativo' : '';
