@@ -131,13 +131,10 @@ main{flex:1;padding:14px 14px 60px;max-width:900px;width:100%;margin:0 auto}
 .carrossel{position:relative;margin-bottom:16px}
 .carrossel-trilho{
   display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;
-  scroll-snap-type:x mandatory;padding:2px 4px 14px;scroll-padding-left:4px;
-  scrollbar-width:thin;scrollbar-color:var(--linha-base) transparent;
+  scroll-snap-type:x mandatory;padding:2px 30px 8px;scroll-padding-left:30px;
+  scrollbar-width:none;-ms-overflow-style:none;
 }
-.carrossel-trilho::-webkit-scrollbar{height:6px}
-.carrossel-trilho::-webkit-scrollbar-track{background:transparent}
-.carrossel-trilho::-webkit-scrollbar-thumb{background:var(--linha-base);border-radius:999px}
-.carrossel-trilho::-webkit-scrollbar-thumb:hover{background:var(--serie)}
+.carrossel-trilho::-webkit-scrollbar{display:none}
 .cartao-grafico{
   scroll-snap-align:start;flex:0 0 min(280px, 82%);
   background:var(--superficie);border:1px solid var(--borda);border-radius:var(--raio);
@@ -148,6 +145,15 @@ main{flex:1;padding:14px 14px 60px;max-width:900px;width:100%;margin:0 auto}
 .numero-heroi{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .numero-heroi.bom{color:var(--bom)}
 .sub-numero{font-size:13px;color:var(--tinta-2);margin-top:4px}
+.seta{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--borda);
+  background:var(--superficie);color:var(--tinta);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--sombra);
+}
+.seta[disabled]{opacity:.3;cursor:default}
+.seta-esq{left:-2px}
+.seta-dir{right:-2px}
 .pontinhos{display:flex;gap:5px;justify-content:center;margin-top:2px}
 .pontinhos span{width:6px;height:6px;border-radius:50%;background:var(--linha-base)}
 .pontinhos span.ativo{background:var(--serie);width:16px;border-radius:3px}
@@ -191,6 +197,21 @@ img.capa{display:block}
 .etiqueta.doacao{background:var(--bom-fundo);color:var(--bom)}
 .item-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .vazio{color:var(--tinta-3);text-align:center;padding:22px 0;font-size:14px}
+
+/* ---------- tabela de informacoes gerais ---------- */
+.rolagem-tabela{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+.tabela-geral{width:100%;border-collapse:collapse;font-size:12.5px}
+.tabela-geral th,.tabela-geral td{padding:9px 4px;text-align:right;white-space:nowrap;
+  border-bottom:1px solid var(--grade);font-variant-numeric:tabular-nums}
+.tabela-geral th{font-size:9.5px;text-transform:uppercase;letter-spacing:0;white-space:normal;
+  color:var(--tinta-2);font-weight:600;position:sticky;top:0;background:var(--superficie)}
+.tabela-geral .col-obra{text-align:left;white-space:normal;min-width:86px;
+  font-variant-numeric:normal;font-weight:600;padding-left:2px}
+.tabela-geral tbody tr:nth-child(even){background:var(--superficie-2)}
+.tabela-geral tfoot td{border-top:2px solid var(--linha-base);border-bottom:none;
+  font-weight:700;padding-top:11px}
+.tabela-geral .zero{color:var(--tinta-3)}
+.tabela-geral .sem-estoque{color:var(--alerta);font-weight:600}
 
 /* ---------- caixinhas ---------- */
 .fundo-modal{
@@ -279,7 +300,10 @@ img.capa{display:block}
     <!-- ---------- ESTOQUE ---------- -->
     <section id="painel-estoque" class="oculto">
 
+      <!-- 1. gráficos -->
       <div class="carrossel">
+        <button class="seta seta-esq" id="seta-esq" aria-label="Gráfico anterior">‹</button>
+        <button class="seta seta-dir" id="seta-dir" aria-label="Próximo gráfico">›</button>
         <div class="carrossel-trilho" id="trilho-graficos">
 
           <article class="cartao-grafico">
@@ -338,50 +362,31 @@ img.capa{display:block}
         <div class="pontinhos" id="pontinhos"></div>
       </div>
 
+      <!-- 2. tabela geral -->
       <section class="secao">
-        <h2>➕ Cadastrar obra</h2>
-        <form id="form-livro">
-          <input type="hidden" id="livro-id">
-          <div class="campo">
-            <label>Imagem da capa</label>
-            <div class="pre-visualizacao">
-              <img id="previa-capa" class="oculto" alt="Prévia da capa">
-              <div id="previa-vazia" class="capa">📕</div>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <span class="btn btn-pequeno escolher-arquivo">
-                  📷 Escolher imagem
-                  <input type="file" id="arquivo-capa" accept="image/*">
-                </span>
-                <button type="button" class="btn btn-pequeno oculto" id="btn-tirar-capa">Remover imagem</button>
-              </div>
-            </div>
-            <div class="dica" id="dica-capa">Opcional. Sem imagem, a obra aparece com um ícone de livro.</div>
-          </div>
-          <div class="campo">
-            <label for="livro-titulo">Título da obra <span class="obrigatorio">*</span></label>
-            <input type="text" id="livro-titulo" required maxlength="120">
-          </div>
-          <div class="linha-dupla">
-            <div class="campo">
-              <label for="livro-valor">Valor (R$) <span class="obrigatorio">*</span></label>
-              <input type="number" id="livro-valor" required min="0" step="0.01" inputmode="decimal">
-            </div>
-            <div class="campo">
-              <label for="livro-lucro">Lucro por exemplar (R$) <span class="obrigatorio">*</span></label>
-              <input type="number" id="livro-lucro" required min="0" step="0.01" inputmode="decimal">
-            </div>
-          </div>
-          <div class="campo">
-            <label for="livro-quantidade">Quantidade disponível <span class="obrigatorio">*</span></label>
-            <input type="number" id="livro-quantidade" required min="0" step="1" inputmode="numeric">
-          </div>
-          <div style="display:flex;gap:8px">
-            <button type="submit" class="btn btn-principal" id="btn-salvar-livro" style="flex:1">Salvar obra</button>
-            <button type="button" class="btn oculto" id="btn-cancelar-livro">Cancelar</button>
-          </div>
-        </form>
+        <h2>📊 Informações gerais</h2>
+        <div class="rolagem-tabela">
+          <table class="tabela-geral">
+            <thead>
+              <tr>
+                <th class="col-obra">Obra</th>
+                <th>Qtd. impressa</th>
+                <th>Em estoque</th>
+                <th>Vendida</th>
+                <th>Doada</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-tabela-geral"></tbody>
+            <tfoot id="rodape-tabela-geral"></tfoot>
+          </table>
+        </div>
+        <div class="dica" style="margin-top:8px">A quantidade impressa é só para controle da tiragem — não entra em nenhum gráfico.</div>
       </section>
 
+      <!-- 3. botão de cadastrar -->
+      <button class="btn btn-principal btn-largo" id="btn-abrir-cadastro" style="margin-bottom:16px">➕ Cadastrar obra</button>
+
+      <!-- 4. obras cadastradas -->
       <section class="secao">
         <h2>📚 Obras cadastradas <span class="etiqueta" id="conta-livros">0</span></h2>
         <div class="barra-ferramentas">
@@ -514,6 +519,57 @@ img.capa{display:block}
   </main>
 </div>
 
+<!-- formulário de obra: fica guardado aqui e é movido para dentro da caixinha -->
+<div id="guarda-form-livro" class="oculto">
+  <form id="form-livro">
+    <input type="hidden" id="livro-id">
+    <div class="campo">
+      <label>Imagem da capa</label>
+      <div class="pre-visualizacao">
+        <img id="previa-capa" class="oculto" alt="Prévia da capa">
+        <div id="previa-vazia" class="capa">📕</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span class="btn btn-pequeno escolher-arquivo">
+            📷 Escolher imagem
+            <input type="file" id="arquivo-capa" accept="image/*">
+          </span>
+          <button type="button" class="btn btn-pequeno oculto" id="btn-tirar-capa">Remover imagem</button>
+        </div>
+      </div>
+      <div class="dica" id="dica-capa">Opcional. Sem imagem, a obra aparece com um ícone de livro.</div>
+    </div>
+    <div class="campo">
+      <label for="livro-titulo">Título da obra <span class="obrigatorio">*</span></label>
+      <input type="text" id="livro-titulo" maxlength="120">
+    </div>
+    <div class="linha-dupla">
+      <div class="campo">
+        <label for="livro-valor">Valor (R$) <span class="obrigatorio">*</span></label>
+        <input type="number" id="livro-valor" min="0" step="0.01" inputmode="decimal">
+      </div>
+      <div class="campo">
+        <label for="livro-lucro">Lucro por exemplar (R$) <span class="obrigatorio">*</span></label>
+        <input type="number" id="livro-lucro" min="0" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+    <div class="linha-dupla">
+      <div class="campo">
+        <label for="livro-quantidade">Quantidade disponível <span class="obrigatorio">*</span></label>
+        <input type="number" id="livro-quantidade" min="0" step="1" inputmode="numeric">
+      </div>
+      <div class="campo">
+        <label for="livro-impressos">Quantidade impressa <span class="obrigatorio">*</span></label>
+        <input type="number" id="livro-impressos" min="0" step="1" inputmode="numeric">
+        <div class="dica">Total da tiragem. Só para controle.</div>
+      </div>
+    </div>
+    <div class="modal-acoes">
+      <button type="button" class="btn" id="btn-cancelar-livro">Cancelar</button>
+      <button type="submit" class="btn btn-principal" id="btn-salvar-livro">Salvar obra</button>
+    </div>
+  </form>
+</div>
+
 <div id="area-modal"></div>
 <div id="torrada" role="status" aria-live="polite"></div>
 <script>
@@ -522,12 +578,11 @@ img.capa{display:block}
    Versao do site: 1.0   |   Versao esperada do Code.gs: 1
    ================================================================== */
 
-var VERSAO_SITE = '1.0';
-var VERSAO_BACKEND_ESPERADA = 1;
+var VERSAO_SITE = '2.0';
+var VERSAO_BACKEND_ESPERADA = 2;
 
 var CHAVE_URL = 'gv_url_planilha';
 var CHAVE_RESPONSAVEL = 'gv_ultimo_responsavel';
-var CHAVE_LIVRO = 'gv_ultimo_livro';
 
 var estado = {
   url: '',
@@ -631,6 +686,11 @@ function abrirModal(html) {
 }
 
 function fecharModal() {
+  // o formulario de obra mora fora da caixinha: devolve antes de apagar,
+  // senao os ouvintes iriam embora junto
+  var form = document.getElementById('form-livro');
+  var guarda = document.getElementById('guarda-form-livro');
+  if (form && guarda && !guarda.contains(form)) guarda.appendChild(form);
   $('area-modal').innerHTML = '';
 }
 
@@ -797,6 +857,7 @@ function recarregar(avisar) {
 
 function desenharTudo() {
   desenharGraficos();
+  desenharTabelaGeral();
   desenharListaLivros();
   prepararFormularioVenda();
   desenharListaVendas();
@@ -829,22 +890,57 @@ function totalEstoque() {
   return estado.livros.reduce(function (s, l) { return s + l.valor * l.quantidade; }, 0);
 }
 
-function mapaLivros() {
-  var m = {};
-  estado.livros.forEach(function (l) { m[l.id] = l; });
-  return m;
+/* ----------------------------------------------------------------
+   Aplicar localmente o que a planilha acabou de confirmar.
+   Evita reler a planilha inteira depois de cada gravacao — era o
+   que fazia o cadastro parecer lento (duas viagens em vez de uma).
+   ---------------------------------------------------------------- */
+
+function aplicarLivro(livro) {
+  var achou = false;
+  estado.livros = estado.livros.map(function (l) {
+    if (l.id === livro.id) { achou = true; return livro; }
+    return l;
+  });
+  if (!achou) estado.livros.push(livro);
+}
+
+function aplicarEstoques(lista) {
+  (lista || []).forEach(function (mudanca) {
+    estado.livros.forEach(function (l) {
+      if (l.id === mudanca.id) l.quantidade = mudanca.quantidade;
+    });
+  });
+}
+
+function aplicarVenda(venda) {
+  var achou = false;
+  estado.vendas = estado.vendas.map(function (v) {
+    if (v.id === venda.id) { achou = true; return venda; }
+    return v;
+  });
+  if (!achou) estado.vendas.push(venda);
+}
+
+function removerLivro(id) {
+  estado.livros = estado.livros.filter(function (l) { return l.id !== id; });
+}
+
+function removerVenda(id) {
+  estado.vendas = estado.vendas.filter(function (v) { return v.id !== id; });
 }
 </script>
 <script>
 /* ==================================================================
-   ESTOQUE — graficos, cadastro de obras e lista
+   ESTOQUE — graficos, tabela geral, cadastro de obras e lista
    ================================================================== */
 
 function ligarEstoque() {
   $('form-livro').addEventListener('submit', salvarLivro);
-  $('btn-cancelar-livro').addEventListener('click', limparFormularioLivro);
+  $('btn-cancelar-livro').addEventListener('click', fecharCadastro);
   $('arquivo-capa').addEventListener('change', escolherCapa);
   $('btn-tirar-capa').addEventListener('click', tirarCapa);
+  $('btn-abrir-cadastro').addEventListener('click', function () { abrirCadastro(null); });
 
   var tempo = null;
   $('busca-livros').addEventListener('input', function () {
@@ -868,11 +964,9 @@ function ligarEstoque() {
 
   $('periodo-grafico').addEventListener('change', function () {
     $('datas-grafico').classList.toggle('oculto', this.value !== 'custom');
-    if (this.value === 'custom') {
-      if (!$('g-data-fim').value) {
-        $('g-data-fim').value = hojeISO();
-        $('g-data-inicio').value = somarDias(hojeISO(), -6);
-      }
+    if (this.value === 'custom' && !$('g-data-fim').value) {
+      $('g-data-fim').value = hojeISO();
+      $('g-data-inicio').value = somarDias(hojeISO(), -6);
     }
     desenharDias();
   });
@@ -887,11 +981,9 @@ function ligarEstoque() {
 function ligarCarrossel() {
   var trilho = $('trilho-graficos');
   var pontos = $('pontinhos');
-  var total = trilho.children.length;
 
-  for (var i = 0; i < total; i++) {
-    var p = document.createElement('span');
-    pontos.appendChild(p);
+  for (var i = 0; i < trilho.children.length; i++) {
+    pontos.appendChild(document.createElement('span'));
   }
 
   function passo() {
@@ -899,7 +991,17 @@ function ligarCarrossel() {
     return primeiro ? primeiro.getBoundingClientRect().width + 12 : 280;
   }
 
+  $('seta-esq').addEventListener('click', function () {
+    trilho.scrollBy({ left: -passo(), behavior: 'smooth' });
+  });
+  $('seta-dir').addEventListener('click', function () {
+    trilho.scrollBy({ left: passo(), behavior: 'smooth' });
+  });
+
   function atualizar() {
+    var max = trilho.scrollWidth - trilho.clientWidth;
+    $('seta-esq').disabled = trilho.scrollLeft <= 4;
+    $('seta-dir').disabled = trilho.scrollLeft >= max - 4;
     var atual = Math.round(trilho.scrollLeft / passo());
     Array.prototype.forEach.call(pontos.children, function (p, i) {
       p.className = i === atual ? 'ativo' : '';
@@ -929,7 +1031,6 @@ function barrasHTML(itens, formatar) {
 
 function desenharGraficos() {
   var reais = vendasReais();
-  var mapa = mapaLivros();
 
   /* 1 — valor em estoque */
   var totalEst = totalEstoque();
@@ -969,9 +1070,8 @@ function desenharGraficos() {
   /* 5 — lucro */
   var totalLucro = reais.reduce(function (s, v) { return s + v.lucro; }, 0);
   $('g-lucro-valor').textContent = dinheiro(totalLucro);
-  var margem = totalVendas > 0 ? Math.round(totalLucro / totalVendas * 100) : 0;
   $('g-lucro-sub').textContent = totalVendas > 0
-    ? margem + '% do que foi vendido'
+    ? Math.round(totalLucro / totalVendas * 100) + '% do que foi vendido'
     : 'nenhuma venda registrada';
   $('g-lucro-barras').innerHTML = barrasHTML(porObra(reais, 'lucro', 4), dinheiro);
 
@@ -1005,10 +1105,9 @@ function ultimosMeses(vendas, campo, quantos) {
 }
 
 function desenharRank() {
-  var reais = vendasReais();
   var soma = {};
   estado.livros.forEach(function (l) { soma[l.titulo] = 0; });
-  reais.forEach(function (v) { soma[v.titulo] = (soma[v.titulo] || 0) + v.quantidade; });
+  vendasReais().forEach(function (v) { soma[v.titulo] = (soma[v.titulo] || 0) + v.quantidade; });
 
   var busca = semAcento(estado.buscaRank).toLowerCase().trim();
   var itens = Object.keys(soma)
@@ -1034,9 +1133,8 @@ function desenharDias() {
       return;
     }
     if (inicio > fim) { var t = inicio; inicio = fim; fim = t; }
-    var maxDias = 62;
-    if (diasEntre(inicio, fim) > maxDias) {
-      inicio = somarDias(fim, -(maxDias - 1));
+    if (diasEntre(inicio, fim) > 62) {
+      inicio = somarDias(fim, -61);
       $('g-data-inicio').value = inicio;
     }
     $('titulo-g-periodo').textContent = 'Vendas de ' + dataBonita(inicio) + ' a ' + dataBonita(fim);
@@ -1047,16 +1145,13 @@ function desenharDias() {
     $('titulo-g-periodo').textContent = 'Vendas dos últimos ' + dias + ' dias';
   }
 
-  var reais = vendasReais().filter(function (v) { return v.data >= inicio && v.data <= fim; });
-  var soma = {};
-  var dia = inicio;
-  var ordem = [];
-  var guarda = 0;
+  var soma = {}, ordem = [], dia = inicio, guarda = 0;
   while (dia <= fim && guarda++ < 400) {
     soma[dia] = 0;
     ordem.push(dia);
     dia = somarDias(dia, 1);
   }
+  var reais = vendasReais().filter(function (v) { return v.data >= inicio && v.data <= fim; });
   reais.forEach(function (v) { if (soma[v.data] !== undefined) soma[v.data] += v.valorTotal; });
 
   var maximo = Math.max.apply(null, ordem.map(function (d) { return soma[d]; }).concat([0]));
@@ -1084,6 +1179,53 @@ function diasEntre(a, b) {
   return Math.round((db - da) / 86400000) + 1;
 }
 
+/* ---------------- tabela de informacoes gerais ---------------- */
+
+function desenharTabelaGeral() {
+  var vendidos = {}, doados = {};
+  estado.vendas.forEach(function (v) {
+    var alvo = v.doacao ? doados : vendidos;
+    alvo[v.livroId] = (alvo[v.livroId] || 0) + v.quantidade;
+  });
+
+  var lista = estado.livros.slice().sort(function (a, b) { return a.titulo.localeCompare(b.titulo); });
+  var corpo = $('corpo-tabela-geral');
+  var rodape = $('rodape-tabela-geral');
+
+  if (!lista.length) {
+    corpo.innerHTML = '<tr><td colspan="5" class="col-obra" style="color:var(--tinta-3);text-align:center;padding:20px 0">' +
+      'Nenhuma obra cadastrada ainda.</td></tr>';
+    rodape.innerHTML = '';
+    return;
+  }
+
+  var totais = { impressos: 0, disponivel: 0, vendidos: 0, doados: 0 };
+
+  corpo.innerHTML = lista.map(function (l) {
+    var v = vendidos[l.id] || 0;
+    var d = doados[l.id] || 0;
+    totais.impressos += l.impressos;
+    totais.disponivel += l.quantidade;
+    totais.vendidos += v;
+    totais.doados += d;
+    return '<tr>' +
+      '<td class="col-obra">' + escapar(l.titulo) + '</td>' +
+      '<td' + (l.impressos ? '' : ' class="zero"') + '>' + l.impressos + '</td>' +
+      '<td' + (l.quantidade ? '' : ' class="sem-estoque"') + '>' + l.quantidade + '</td>' +
+      '<td' + (v ? '' : ' class="zero"') + '>' + v + '</td>' +
+      '<td' + (d ? '' : ' class="zero"') + '>' + d + '</td>' +
+      '</tr>';
+  }).join('');
+
+  rodape.innerHTML = '<tr>' +
+    '<td class="col-obra">Total (' + lista.length + ')</td>' +
+    '<td>' + totais.impressos + '</td>' +
+    '<td>' + totais.disponivel + '</td>' +
+    '<td>' + totais.vendidos + '</td>' +
+    '<td>' + totais.doados + '</td>' +
+    '</tr>';
+}
+
 /* ---------------- capa ---------------- */
 
 function escolherCapa(ev) {
@@ -1098,8 +1240,7 @@ function escolherCapa(ev) {
   leitor.onload = function () {
     var img = new Image();
     img.onload = function () {
-      var maxLado = 700;
-      var escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+      var escala = Math.min(1, 700 / Math.max(img.width, img.height));
       var largura = Math.round(img.width * escala);
       var altura = Math.round(img.height * escala);
       var tela = document.createElement('canvas');
@@ -1112,7 +1253,7 @@ function escolherCapa(ev) {
         nome: 'capa-' + Date.now() + '.jpg'
       };
       mostrarPreviaCapa(url);
-      $('dica-capa').textContent = 'Imagem pronta. Ela vai para o Google Drive quando a obra for salva.';
+      $('dica-capa').textContent = 'Imagem pronta. Ela vai para o Google Drive junto com o cadastro.';
     };
     img.onerror = function () {
       torrada('Não consegui ler essa imagem.', true);
@@ -1146,7 +1287,45 @@ function tirarCapa() {
   $('dica-capa').textContent = 'Opcional. Sem imagem, a obra aparece com um ícone de livro.';
 }
 
-/* ---------------- cadastro de obras ---------------- */
+/* ---------------- caixinha de cadastro ---------------- */
+
+function abrirCadastro(livro) {
+  var fundo = abrirModal('<h3 id="titulo-cadastro">Cadastrar obra</h3>' +
+    '<p class="sub" id="sub-cadastro">Os campos com <span class="obrigatorio">*</span> são obrigatórios.</p>' +
+    '<div id="alvo-form"></div>');
+
+  $('alvo-form').appendChild($('form-livro'));
+  $('form-livro').reset();
+  $('livro-id').value = '';
+  estado.capaPendente = null;
+  estado.capaAtual = '';
+  mostrarPreviaCapa('');
+  $('dica-capa').textContent = 'Opcional. Sem imagem, a obra aparece com um ícone de livro.';
+
+  if (livro) {
+    $('titulo-cadastro').textContent = 'Editar obra';
+    $('sub-cadastro').textContent = livro.titulo;
+    $('livro-id').value = livro.id;
+    $('livro-titulo').value = livro.titulo;
+    $('livro-valor').value = livro.valor;
+    $('livro-lucro').value = livro.lucro;
+    $('livro-quantidade').value = livro.quantidade;
+    $('livro-impressos').value = livro.impressos;
+    estado.capaAtual = livro.imagem || '';
+    mostrarPreviaCapa(livro.imagem || '');
+    $('btn-salvar-livro').textContent = 'Salvar alterações';
+  } else {
+    $('btn-salvar-livro').textContent = 'Salvar obra';
+    setTimeout(function () { $('livro-titulo').focus(); }, 90);
+  }
+  return fundo;
+}
+
+function fecharCadastro() {
+  fecharModal();   // devolve o formulario ao esconderijo com os ouvintes intactos
+}
+
+/* ---------------- gravar obra ---------------- */
 
 function salvarLivro(ev) {
   ev.preventDefault();
@@ -1157,72 +1336,51 @@ function salvarLivro(ev) {
     valor: Number($('livro-valor').value),
     lucro: Number($('livro-lucro').value),
     quantidade: Math.round(Number($('livro-quantidade').value)),
+    impressos: Math.round(Number($('livro-impressos').value)),
     imagem: estado.capaAtual || ''
   };
   if (!livro.titulo) { torrada('Informe o título da obra.', true); return; }
-  if (!(livro.valor >= 0)) { torrada('Informe o valor da obra.', true); return; }
-  if (!(livro.lucro >= 0)) { torrada('Informe o lucro por exemplar.', true); return; }
-  if (!(livro.quantidade >= 0)) { torrada('Informe a quantidade disponível.', true); return; }
+  if ($('livro-valor').value === '' || !(livro.valor >= 0)) { torrada('Informe o valor da obra.', true); return; }
+  if ($('livro-lucro').value === '' || !(livro.lucro >= 0)) { torrada('Informe o lucro por exemplar.', true); return; }
+  if ($('livro-quantidade').value === '' || !(livro.quantidade >= 0)) { torrada('Informe a quantidade disponível.', true); return; }
+  if ($('livro-impressos').value === '' || !(livro.impressos >= 0)) { torrada('Informe a quantidade impressa.', true); return; }
   if (livro.lucro > livro.valor) { torrada('O lucro não pode ser maior que o valor da obra.', true); return; }
 
   ocupado(botao, true, 'Salvando…');
+  var pedido = { acao: 'salvarLivro', livro: livro };
+  if (estado.capaPendente) pedido.capa = estado.capaPendente;
 
-  var antes = estado.capaPendente
-    ? chamar({ acao: 'salvarCapa', nome: estado.capaPendente.nome, mime: estado.capaPendente.mime, dados: estado.capaPendente.dados })
-        .then(function (r) { livro.imagem = r.url; })
-    : Promise.resolve();
-
-  antes.then(function () {
-    return chamar({ acao: 'salvarLivro', livro: livro });
-  }).then(function () {
+  chamar(pedido).then(function (r) {
+    aplicarLivro(r.livro);
     torrada(livro.id ? 'Obra atualizada.' : 'Obra cadastrada.');
-    limparFormularioLivro();
-    return recarregar(false);
+    fecharCadastro();
+    desenharTudo();
   }).catch(function (e) {
     torrada(e.message, true);
   }).then(function () {
-    ocupado(botao, false);
+    ocupado(botao, false);   // o botao volta ao normal dentro do esconderijo
   });
-}
-
-function limparFormularioLivro() {
-  $('form-livro').reset();
-  $('livro-id').value = '';
-  estado.editandoLivro = null;
-  tirarCapa();
-  $('btn-salvar-livro').textContent = 'Salvar obra';
-  $('btn-cancelar-livro').classList.add('oculto');
 }
 
 function editarLivro(id) {
   var livro = estado.livros.filter(function (l) { return l.id === id; })[0];
-  if (!livro) return;
-  estado.editandoLivro = id;
-  $('livro-id').value = livro.id;
-  $('livro-titulo').value = livro.titulo;
-  $('livro-valor').value = livro.valor;
-  $('livro-lucro').value = livro.lucro;
-  $('livro-quantidade').value = livro.quantidade;
-  estado.capaAtual = livro.imagem || '';
-  estado.capaPendente = null;
-  mostrarPreviaCapa(livro.imagem || '');
-  $('btn-salvar-livro').textContent = 'Salvar alterações';
-  $('btn-cancelar-livro').classList.remove('oculto');
-  $('form-livro').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (livro) abrirCadastro(livro);
 }
 
 function excluirLivro(id) {
   var livro = estado.livros.filter(function (l) { return l.id === id; })[0];
   if (!livro) return;
   var vendasDaObra = estado.vendas.filter(function (v) { return v.livroId === id; }).length;
-  var texto = 'A obra "' + livro.titulo + '" sai do estoque.' +
-    (vendasDaObra ? ' As ' + vendasDaObra + ' venda(s) já registradas continuam na planilha.' : '');
-  confirmar('Excluir obra?', texto, 'Excluir', function () {
-    chamar({ acao: 'deletarLivro', id: id }).then(function () {
-      torrada('Obra excluída.');
-      return recarregar(false);
-    }).catch(function (e) { torrada(e.message, true); });
-  });
+  confirmar('Excluir obra?',
+    'A obra "' + livro.titulo + '" sai do estoque.' +
+    (vendasDaObra ? ' As ' + vendasDaObra + ' venda(s) já registradas continuam na planilha.' : ''),
+    'Excluir', function () {
+      chamar({ acao: 'deletarLivro', id: id }).then(function () {
+        removerLivro(id);
+        torrada('Obra excluída.');
+        desenharTudo();
+      }).catch(function (e) { torrada(e.message, true); });
+    });
 }
 
 function abrirAlterarQuantidade(id) {
@@ -1259,8 +1417,8 @@ function abrirAlterarQuantidade(id) {
     return modo() === 'chegou' ? livro.quantidade + n : n;
   }
   function atualizarPrevia() {
-    if (entrada.value === '') { previa.textContent = ''; return; }
-    previa.textContent = 'Passa a ter ' + Math.max(0, nova()) + ' exemplar(es) em estoque.';
+    previa.textContent = entrada.value === '' ? '' :
+      'Passa a ter ' + Math.max(0, nova()) + ' exemplar(es) em estoque.';
   }
   Array.prototype.forEach.call(fundo.querySelectorAll('input[name=modo-qtd]'), function (r) {
     r.addEventListener('change', function () { modo(); atualizarPrevia(); });
@@ -1276,9 +1434,10 @@ function abrirAlterarQuantidade(id) {
     if (q < 0) { torrada('A quantidade não pode ficar negativa.', true); return; }
     ocupado(botao, true, 'Salvando…');
     chamar({ acao: 'alterarQuantidade', id: id, quantidade: q }).then(function () {
+      aplicarEstoques([{ id: id, quantidade: q }]);
       fecharModal();
       torrada('Estoque de "' + livro.titulo + '" agora é ' + q + '.');
-      return recarregar(false);
+      desenharTudo();
     }).catch(function (e) {
       torrada(e.message, true);
       ocupado(botao, false);
@@ -1324,7 +1483,8 @@ function desenharListaLivros() {
       '<div class="item-corpo">' +
       '<div class="item-titulo">' + escapar(l.titulo) + etiqueta + '</div>' +
       '<div class="item-info">' + dinheiro(l.valor) + ' · lucro ' + dinheiro(l.lucro) + ' por exemplar</div>' +
-      '<div class="item-info">Total em estoque: ' + dinheiro(l.valor * l.quantidade) + '</div>' +
+      '<div class="item-info">Total em estoque: ' + dinheiro(l.valor * l.quantidade) +
+      (l.impressos ? ' · ' + l.impressos + ' impresso(s)' : '') + '</div>' +
       '<div class="item-acoes">' +
       '<button class="btn btn-pequeno" onclick="editarLivro(\'' + escapar(l.id) + '\')">✏️ Editar</button>' +
       '<button class="btn btn-pequeno" onclick="abrirAlterarQuantidade(\'' + escapar(l.id) + '\')">🔢 Alterar quantidade</button>' +
@@ -1346,7 +1506,6 @@ function ligarVendas() {
     var livro = estado.livros.filter(function (l) { return l.id === $('venda-livro').value; })[0];
     if (livro) {
       $('venda-valor').value = livro.valor;
-      guardar(CHAVE_LIVRO, livro.id);
       $('dica-estoque-livro').textContent = livro.quantidade + ' exemplar(es) em estoque · ' +
         dinheiro(livro.valor) + ' cada';
     } else {
@@ -1391,7 +1550,7 @@ function ligarVendas() {
 
 function prepararFormularioVenda() {
   var select = $('venda-livro');
-  var escolhido = select.value || ler(CHAVE_LIVRO);
+  var escolhido = select.value;
   var lista = estado.livros.slice().sort(function (a, b) { return a.titulo.localeCompare(b.titulo); });
 
   select.innerHTML = '<option value="">— escolha uma obra —</option>' + lista.map(function (l) {
@@ -1477,17 +1636,18 @@ function salvarVenda(ev) {
   ocupado(botao, true, 'Salvando…');
   chamar({ acao: 'salvarVenda', venda: venda }).then(function (r) {
     guardar(CHAVE_RESPONSAVEL, venda.responsavel);
-    guardar(CHAVE_LIVRO, venda.livroId);
     var editou = !!venda.id;
+    aplicarVenda(r.venda);
+    aplicarEstoques(r.livros);
     limparFormularioVenda();
     if (editou) {
       torrada('Venda atualizada.');
-    } else if (r.doacao) {
-      torrada('Doação registrada — ' + r.quantidade + ' exemplar(es) de "' + r.titulo + '" saiu do estoque.');
+    } else if (r.venda.doacao) {
+      torrada('Doação registrada — ' + r.venda.quantidade + ' exemplar(es) de "' + r.venda.titulo + '" saiu do estoque.');
     } else {
-      torrada('Venda registrada com sucesso — subtraído ' + dinheiro(r.valorTotal) + ' do estoque geral.');
+      torrada('Venda registrada com sucesso — subtraído ' + dinheiro(r.venda.valorTotal) + ' do estoque geral.');
     }
-    return recarregar(false);
+    desenharTudo();
   }).catch(function (e) {
     torrada(e.message, true);
   }).then(function () {
@@ -1497,18 +1657,19 @@ function salvarVenda(ev) {
 
 function limparFormularioVenda() {
   var responsavel = $('venda-responsavel').value;
-  var livro = $('venda-livro').value;
   $('form-venda').reset();
   $('venda-id').value = '';
   estado.editandoVenda = null;
   $('venda-data').value = hojeISO();
-  $('venda-responsavel').value = responsavel;
+  $('venda-responsavel').value = responsavel;   // so o responsavel fica lembrado
   $('venda-quantidade').value = 1;
+  $('venda-valor').value = '';
   $('venda-valor').disabled = false;
   $('venda-desconto-sn').disabled = false;
   $('campo-desconto').classList.add('oculto');
-  $('venda-livro').value = livro;
-  $('venda-livro').dispatchEvent(new Event('change'));
+  $('venda-livro').value = '';                  // o titulo e limpo a cada venda
+  $('dica-estoque-livro').textContent = '';
+  atualizarResumoVenda();
   $('btn-salvar-venda').textContent = 'Salvar venda';
   $('btn-cancelar-venda').classList.add('oculto');
 }
@@ -1544,9 +1705,11 @@ function excluirVenda(id) {
     'A venda de "' + venda.titulo + '" para ' + venda.cliente + ' será apagada e os ' +
     venda.quantidade + ' exemplar(es) voltam para o estoque.',
     'Excluir', function () {
-      chamar({ acao: 'deletarVenda', id: id }).then(function () {
+      chamar({ acao: 'deletarVenda', id: id }).then(function (r) {
+        removerVenda(id);
+        aplicarEstoques(r.livros);
         torrada('Venda excluída — estoque devolvido.');
-        return recarregar(false);
+        desenharTudo();
       }).catch(function (e) { torrada(e.message, true); });
     });
 }
